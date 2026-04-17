@@ -2,23 +2,39 @@
 
 import type { JudgeVerdict } from "@/types/interview";
 
+function scoreColor(value: number): string {
+  if (value >= 4) return "var(--color-deep-green)";
+  if (value >= 3) return "var(--color-oxblood)";
+  return "var(--color-coral)";
+}
+
 function ScoreBar({ label, score, max = 5 }: { label: string; score: number; max?: number }) {
   const pct = (score / max) * 100;
-  const color =
-    score >= 4 ? "bg-emerald-500" : score >= 3 ? "bg-amber-400" : "bg-red-400";
+  const color = scoreColor(score);
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-slate-600">{label}</span>
-        <span className="font-mono font-semibold text-slate-800">
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <span
+          className="font-mono text-[10px] uppercase tracking-widest"
+          style={{ color: "var(--color-deep-green)" }}
+        >
+          {label}
+        </span>
+        <span
+          className="font-mono text-sm font-semibold"
+          style={{ color: "var(--color-charcoal)" }}
+        >
           {score}/{max}
         </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+      <div
+        className="h-1.5 overflow-hidden rounded-full"
+        style={{ background: "var(--color-bone-200)" }}
+      >
         <div
-          className={`h-full rounded-full transition-all duration-500 ${color}`}
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: color }}
         />
       </div>
     </div>
@@ -31,65 +47,104 @@ interface ScoreCardProps {
 
 export function ScoreCard({ verdict }: ScoreCardProps) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">Score</h3>
+    <div
+      className="rounded-2xl border p-5"
+      style={{
+        borderColor: "var(--color-charcoal-soft)",
+        background: "var(--color-bone-50)",
+      }}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <h3
+          className="font-mono text-xs uppercase tracking-[0.22em]"
+          style={{ color: "var(--color-oxblood)" }}
+        >
+          Score
+        </h3>
         {verdict.cefr_estimate && (
-          <span className="rounded-full bg-indigo-100 px-2 py-0.5 font-mono text-xs font-semibold text-indigo-700">
+          <span
+            className="rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold"
+            style={{
+              background: "var(--color-oxblood)",
+              color: "var(--color-bone)",
+            }}
+          >
             CEFR {verdict.cefr_estimate}
           </span>
         )}
       </div>
 
-      <div className="space-y-2.5">
-        <ScoreBar label="Domain Expertise" score={verdict.domain_expertise} />
-        <ScoreBar label="English Fluency" score={verdict.english_fluency} />
+      <div className="space-y-3">
+        <ScoreBar label="Domain" score={verdict.domain_expertise} />
+        <ScoreBar label="English" score={verdict.english_fluency} />
         <ScoreBar label="Structure" score={verdict.structure} />
         <ScoreBar label="Confidence" score={verdict.confidence} />
       </div>
 
       {verdict.filler_count > 0 && (
-        <p className="mt-3 font-mono text-xs text-slate-400">
-          {verdict.filler_count} fillers in {verdict.word_count} words (
-          {verdict.fillers_per_100_words}/100w)
+        <p
+          className="mt-4 font-mono text-[11px]"
+          style={{ color: "var(--color-charcoal-soft)" }}
+        >
+          {verdict.filler_count} fillers in {verdict.word_count} words ({verdict.fillers_per_100_words}/100w)
         </p>
       )}
 
       {verdict.strengths.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-medium text-emerald-700">Strengths</p>
-          <div className="mt-1 flex flex-wrap gap-1">
+        <div className="mt-4">
+          <p
+            className="font-mono text-[10px] uppercase tracking-widest"
+            style={{ color: "var(--color-deep-green)" }}
+          >
+            Strengths
+          </p>
+          <ul className="mt-2 space-y-1">
             {verdict.strengths.map((s, i) => (
-              <span
+              <li
                 key={i}
-                className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700"
+                className="text-sm leading-snug"
+                style={{ color: "var(--color-charcoal)" }}
               >
-                {s}
-              </span>
+                · {s}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
       {verdict.gaps.length > 0 && (
-        <div className="mt-2">
-          <p className="text-xs font-medium text-amber-700">Gaps</p>
-          <div className="mt-1 flex flex-wrap gap-1">
+        <div className="mt-3">
+          <p
+            className="font-mono text-[10px] uppercase tracking-widest"
+            style={{ color: "var(--color-oxblood)" }}
+          >
+            Gaps
+          </p>
+          <ul className="mt-2 space-y-1">
             {verdict.gaps.map((g, i) => (
-              <span
+              <li
                 key={i}
-                className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700"
+                className="text-sm leading-snug"
+                style={{ color: "var(--color-charcoal)" }}
               >
-                {g}
-              </span>
+                · {g}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
       {verdict.one_line_improvement && (
-        <p className="mt-3 border-t border-slate-100 pt-2 text-xs font-medium text-indigo-700">
-          {verdict.one_line_improvement}
+        <p
+          className="mt-4 border-t pt-3 text-sm leading-snug"
+          style={{
+            borderColor: "var(--color-charcoal-soft)",
+            color: "var(--color-oxblood)",
+            fontFamily: "var(--font-fraunces)",
+            fontStyle: "italic",
+          }}
+        >
+          → {verdict.one_line_improvement}
         </p>
       )}
     </div>

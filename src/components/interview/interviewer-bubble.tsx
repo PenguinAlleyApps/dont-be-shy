@@ -12,22 +12,43 @@ interface InterviewerBubbleProps {
 export function InterviewerBubble({ text, isStreaming, ttsEnabled }: InterviewerBubbleProps) {
   return (
     <div className="flex gap-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+      <span
+        aria-hidden="true"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-semibold uppercase tracking-widest"
+        style={{
+          background: "var(--color-oxblood)",
+          color: "var(--color-bone)",
+        }}
+      >
         IV
-      </div>
-      <div className="max-w-[80%] space-y-1">
-        <div className="rounded-2xl rounded-tl-sm bg-indigo-50 px-4 py-3 text-sm text-slate-800">
+      </span>
+      <div className="max-w-[80%] space-y-1.5">
+        <div
+          className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed"
+          style={{
+            background: "var(--color-bone-200)",
+            color: "var(--color-charcoal)",
+            fontFamily: "var(--font-inter-tight)",
+          }}
+        >
           {text}
           {isStreaming && (
-            <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-indigo-400 align-middle" />
+            <span
+              aria-hidden="true"
+              className="ml-1 inline-block h-4 w-[3px] animate-pulse align-middle"
+              style={{ background: "var(--color-oxblood)" }}
+            />
           )}
         </div>
         {ttsEnabled && text && !isStreaming && (
           <button
+            type="button"
             onClick={() => speak(text)}
-            className="flex items-center gap-1 px-1 text-xs text-slate-400 transition-colors hover:text-indigo-600"
+            aria-label="Replay this question"
+            className="flex items-center gap-1.5 px-1 font-mono text-[10px] uppercase tracking-widest transition-opacity hover:opacity-70"
+            style={{ color: "var(--color-deep-green)" }}
           >
-            <Volume2 className="h-3 w-3" />
+            <Volume2 className="h-3 w-3" aria-hidden="true" />
             Replay
           </button>
         )}

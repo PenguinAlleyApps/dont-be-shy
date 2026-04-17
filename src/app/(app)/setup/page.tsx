@@ -9,24 +9,48 @@ import { ApiKeyInput } from "@/components/setup/api-key-input";
 import { getApiKey, saveApiKey } from "@/lib/api-key";
 import type { RoleType } from "@/types/interview";
 
+const ROLE_TITLES: Partial<Record<RoleType, string>> = {
+  software_engineer: "Software Engineer",
+  frontend: "Frontend Developer",
+  backend: "Backend Developer",
+  fullstack: "Full-Stack Developer",
+  data_ml: "Data / ML Engineer",
+  devops: "DevOps / SRE",
+  product_manager: "Product Manager",
+  ux_designer: "UX Designer",
+  sales: "Sales / Business Development",
+  marketing: "Marketing",
+  leadership: "Engineering Manager / Director",
+};
+
+function StepLabel({ number, children }: { number: string; children: React.ReactNode }) {
+  return (
+    <h2
+      className="font-mono text-xs uppercase tracking-[0.22em]"
+      style={{ color: "var(--color-oxblood)" }}
+    >
+      <span style={{ color: "var(--color-deep-green)" }}>{number}</span> · {children}
+    </h2>
+  );
+}
+
 export default function SetupPage() {
   const router = useRouter();
   const [roleType, setRoleType] = useState<RoleType | null>(null);
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [showJD, setShowJD] = useState(false);
-  const [mode, setMode] = useState<"voice" | "text">("text");
+  const [mode, setMode] = useState<"voice" | "text">("voice");
   const [apiKey, setApiKey] = useState(getApiKey() ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const canStart = (roleType && roleType !== "custom" && jobTitle.trim()) || (roleType === "custom" && jobTitle.trim());
+  const canStart = !!roleType && jobTitle.trim().length > 0;
 
   async function handleStart() {
     if (!canStart) return;
     setLoading(true);
     setError("");
-
     if (apiKey) saveApiKey(apiKey);
 
     try {
@@ -48,8 +72,6 @@ export default function SetupPage() {
       }
 
       const data = await res.json();
-
-      // Store session data in sessionStorage for the interview page
       sessionStorage.setItem(
         `dont-be-shy-session-${data.sessionId}`,
         JSON.stringify({
@@ -70,49 +92,67 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-slate-900">Set up your interview</h1>
-      <p className="mt-1 text-slate-500">Choose a role, pick your mode, and start practicing.</p>
+    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-8 sm:py-16">
+      <header>
+        <p
+          className="font-mono text-xs uppercase tracking-[0.22em]"
+          style={{ color: "var(--color-deep-green)" }}
+        >
+          Setup
+        </p>
+        <h1
+          className="mt-3 text-4xl tracking-tight sm:text-5xl"
+          style={{
+            fontFamily: "var(--font-fraunces)",
+            fontWeight: 500,
+            color: "var(--color-charcoal)",
+          }}
+        >
+          Tell me what you&rsquo;re walking into.
+        </h1>
+        <p className="mt-3 text-base" style={{ color: "var(--color-charcoal-soft)" }}>
+          Three steps. The interview adapts to what you say here.
+        </p>
+      </header>
 
-      {/* Step 1: Role */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-          1. What role are you interviewing for?
-        </h2>
-        <RoleTemplates selected={roleType} onSelect={(role) => {
-          setRoleType(role);
-          if (role !== "custom") {
-            const templates = {
-              software_engineer: "Software Engineer",
-              frontend: "Frontend Developer",
-              backend: "Backend Developer",
-              fullstack: "Full-Stack Developer",
-              data_ml: "Data / ML Engineer",
-              devops: "DevOps / SRE",
-              product_manager: "Product Manager",
-              ux_designer: "UX Designer",
-              sales: "Sales / Business Development",
-              marketing: "Marketing",
-              leadership: "Engineering Manager / Director",
-            };
-            setJobTitle(templates[role as keyof typeof templates] || role);
-          }
-        }} />
+      <section className="mt-12 space-y-4">
+        <StepLabel number="01">What role are you interviewing for?</StepLabel>
+        <RoleTemplates
+          selected={roleType}
+          onSelect={(role) => {
+            setRoleType(role);
+            if (role !== "custom" && ROLE_TITLES[role]) {
+              setJobTitle(ROLE_TITLES[role]!);
+            }
+          }}
+        />
 
-        <div className="mt-4">
+        <div className="pt-2">
+          <label htmlFor="job-title" className="sr-only">
+            Job title
+          </label>
           <input
+            id="job-title"
             type="text"
             value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
             placeholder="Job title (e.g., Senior React Developer at Stripe)"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            className="w-full rounded-lg border px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2"
+            style={{
+              borderColor: "var(--color-charcoal-soft)",
+              background: "var(--color-bone-50)",
+              color: "var(--color-charcoal)",
+              fontFamily: "var(--font-inter-tight)",
+            }}
           />
         </div>
 
         {!showJD ? (
           <button
+            type="button"
             onClick={() => setShowJD(true)}
-            className="mt-2 text-sm text-indigo-600 hover:text-indigo-700"
+            className="font-mono text-xs uppercase tracking-widest underline decoration-1 underline-offset-4 transition-opacity hover:opacity-70"
+            style={{ color: "var(--color-oxblood)" }}
           >
             + Paste a full job description for personalized questions
           </button>
@@ -120,48 +160,64 @@ export default function SetupPage() {
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Paste the full job description here (optional but recommended for personalized questions)..."
+            placeholder="Paste the full job description here (optional but recommended)..."
             rows={6}
-            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            className="w-full rounded-lg border px-4 py-3 text-sm transition-colors focus:outline-none focus:ring-2"
+            style={{
+              borderColor: "var(--color-charcoal-soft)",
+              background: "var(--color-bone-50)",
+              color: "var(--color-charcoal)",
+              fontFamily: "var(--font-inter-tight)",
+            }}
           />
         )}
       </section>
 
-      {/* Step 2: Mode */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-          2. How do you want to respond?
-        </h2>
+      <section className="mt-12 space-y-4">
+        <StepLabel number="02">How do you want to respond?</StepLabel>
         <ModeSelector mode={mode} onSelect={setMode} />
       </section>
 
-      {/* Step 3: API Key */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-          3. API Key
-        </h2>
-        <ApiKeyInput apiKey={apiKey} onChange={setApiKey} />
+      <section className="mt-12">
+        <StepLabel number="03">Anthropic key</StepLabel>
+        <div className="mt-4">
+          <ApiKeyInput apiKey={apiKey} onChange={setApiKey} />
+        </div>
       </section>
 
-      {/* Start */}
-      <div className="mt-10">
+      <div className="mt-14">
         {error && (
-          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+          <p
+            className="mb-4 rounded-lg px-4 py-3 text-sm"
+            style={{
+              background: "var(--color-bone-200)",
+              color: "var(--color-oxblood)",
+              borderLeft: "3px solid var(--color-oxblood)",
+            }}
+          >
             {error}
           </p>
         )}
         <button
+          type="button"
           onClick={handleStart}
           disabled={!canStart || loading}
-          className="w-full rounded-xl bg-indigo-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 disabled:opacity-40"
+          className="group inline-flex items-center gap-3 rounded-full px-7 py-4 text-base font-medium transition-transform duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:scale-100"
+          style={{
+            background: "var(--color-coral)",
+            color: "var(--color-bone)",
+          }}
         >
           {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
               Generating your interview...
-            </span>
+            </>
           ) : (
-            "Start Interview"
+            <>
+              Take the seat.
+              <span aria-hidden="true" className="inline-block transition-transform duration-300 group-hover:translate-x-0.5">→</span>
+            </>
           )}
         </button>
       </div>

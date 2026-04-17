@@ -20,14 +20,9 @@ export function ApiKeyInput({ apiKey, onChange }: ApiKeyInputProps) {
     if (!apiKey || !isValidKeyFormat(apiKey)) return;
     setTesting(true);
     setTestResult(null);
-
     try {
       const res = await fetch("/api/health");
-      if (res.ok) {
-        setTestResult("pass");
-      } else {
-        setTestResult("fail");
-      }
+      setTestResult(res.ok ? "pass" : "fail");
     } catch {
       setTestResult("fail");
     } finally {
@@ -36,11 +31,15 @@ export function ApiKeyInput({ apiKey, onChange }: ApiKeyInputProps) {
   }
 
   return (
-    <div className="space-y-2">
-      <label htmlFor="anthropic-api-key" className="flex items-center gap-2 text-sm font-medium text-slate-700">
-        <Key aria-hidden="true" className="h-4 w-4" />
+    <div className="space-y-3">
+      <label
+        htmlFor="anthropic-api-key"
+        className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest"
+        style={{ color: "var(--color-deep-green)" }}
+      >
+        <Key aria-hidden="true" className="h-3.5 w-3.5" />
         Anthropic API Key
-        <span className="text-xs text-slate-400">(optional)</span>
+        <span style={{ opacity: 0.6 }}>(optional)</span>
       </label>
 
       <div className="flex gap-2">
@@ -58,18 +57,20 @@ export function ApiKeyInput({ apiKey, onChange }: ApiKeyInputProps) {
             spellCheck={false}
             aria-invalid={!isValid}
             aria-describedby="anthropic-api-key-hint"
-            className={`w-full rounded-lg border px-3 py-2 pr-10 font-mono text-sm transition-colors ${
-              !isValid
-                ? "border-red-300 focus:border-red-500 focus:ring-red-200"
-                : "border-slate-300 focus:border-indigo-500 focus:ring-indigo-200"
-            } focus:outline-none focus:ring-2`}
+            className="w-full rounded-lg border px-3 py-2.5 pr-10 font-mono text-sm transition-colors focus:outline-none focus:ring-2"
+            style={{
+              borderColor: !isValid ? "var(--color-oxblood)" : "var(--color-charcoal-soft)",
+              background: "var(--color-bone-50)",
+              color: "var(--color-charcoal)",
+            }}
           />
           <button
             type="button"
             onClick={() => setVisible(!visible)}
             aria-label={visible ? "Hide API key" : "Show API key"}
             aria-pressed={visible}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-2 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-70"
+            style={{ color: "var(--color-deep-green)" }}
           >
             {visible ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
           </button>
@@ -79,17 +80,26 @@ export function ApiKeyInput({ apiKey, onChange }: ApiKeyInputProps) {
           type="button"
           onClick={testKey}
           disabled={!apiKey || !isValid || testing}
-          aria-label="Test API key connectivity"
-          className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-40"
+          aria-label="Test API key"
+          className="rounded-lg border px-4 py-2 font-mono text-xs uppercase tracking-widest transition-colors hover:opacity-80 disabled:opacity-40"
+          style={{
+            borderColor: "var(--color-charcoal-soft)",
+            color: "var(--color-deep-green)",
+            background: "var(--color-bone-50)",
+          }}
         >
           {testing ? "..." : "Test"}
         </button>
 
-        {testResult === "pass" && <Check aria-label="API key works" className="my-auto h-5 w-5 text-emerald-500" />}
-        {testResult === "fail" && <X aria-label="API key check failed" className="my-auto h-5 w-5 text-red-500" />}
+        {testResult === "pass" && <Check aria-label="Key works" className="my-auto h-5 w-5" style={{ color: "var(--color-deep-green)" }} />}
+        {testResult === "fail" && <X aria-label="Key check failed" className="my-auto h-5 w-5" style={{ color: "var(--color-oxblood)" }} />}
       </div>
 
-      <p id="anthropic-api-key-hint" className="text-xs text-slate-500">
+      <p
+        id="anthropic-api-key-hint"
+        className="text-xs"
+        style={{ color: "var(--color-charcoal-soft)" }}
+      >
         {!apiKey
           ? "No key? Demo mode gives you 3 free questions per session."
           : "Stored in your browser only. Never sent to our servers."}
