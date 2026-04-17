@@ -2,23 +2,37 @@
 
 export function AttributionFooter() {
   return (
-    <footer className="border-t border-slate-200 bg-white py-6 text-center text-sm text-slate-500">
-      <p>
-        Built by{" "}
-        <span className="font-semibold text-slate-700">PA·co</span> — A{" "}
-        <a
-          href="https://penguinalley.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-indigo-600 hover:text-indigo-700 underline underline-offset-2"
-        >
-          Penguin Alley
-        </a>{" "}
-        System
-      </p>
-      <p className="mt-1 text-xs text-slate-400">
-        Open source under AGPL-3.0
-      </p>
+    <footer
+      className="border-t px-6 py-10 sm:px-10"
+      style={{ borderColor: "var(--color-charcoal-soft)", color: "var(--color-deep-green)" }}
+    >
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 font-mono text-xs uppercase tracking-widest sm:flex-row sm:items-baseline sm:justify-between">
+        <p>
+          Built by{" "}
+          <span style={{ color: "var(--color-charcoal)" }}>PA·co</span> · A{" "}
+          <a
+            href="https://penguinalley.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline decoration-1 underline-offset-4 hover:opacity-70"
+            style={{ color: "var(--color-charcoal)" }}
+          >
+            Penguin Alley
+          </a>{" "}
+          system
+        </p>
+        <p>
+          AGPL-3.0 ·{" "}
+          <a
+            href="https://github.com/PenguinAlleyApps/dont-be-shy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline decoration-1 underline-offset-4 hover:opacity-70"
+          >
+            github
+          </a>
+        </p>
+      </div>
     </footer>
   );
 }

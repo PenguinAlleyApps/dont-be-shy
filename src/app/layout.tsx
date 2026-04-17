@@ -1,16 +1,57 @@
 import type { Metadata, Viewport } from "next";
+import { Fraunces, Inter_Tight, JetBrains_Mono, Caveat } from "next/font/google";
 import "./globals.css";
 
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["opsz", "SOFT"],
+});
+
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  variable: "--font-inter-tight",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-caveat",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Don't Be Shy — Interview Simulation by Penguin Alley",
+  title: "Don't Be Shy — Practice the interview you're afraid of.",
   description:
-    "AI-powered mock interview simulator. Practice for any role with real-time voice interviews and 4-axis scoring. Free and open source.",
+    "Free, open-source AI mock interview simulator. Voice or text. Real-time scoring with CEFR English fluency estimation. Bring your own Anthropic key. By Penguin Alley.",
+  openGraph: {
+    title: "Don't Be Shy — Practice the interview you're afraid of.",
+    description:
+      "Free, open-source AI mock interview simulator. Voice or text. Real-time scoring.",
+    type: "website",
+    siteName: "Don't Be Shy",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Don't Be Shy",
+    description: "Practice the interview you're afraid of.",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#4f46e5",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f1e8" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1714" },
+  ],
 };
 
 export default function RootLayout({
@@ -19,22 +60,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-slate-50 text-slate-800 antialiased">
-        {children}
-      </body>
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${interTight.variable} ${jetbrainsMono.variable} ${caveat.variable}`}
+    >
+      <body className="bg-bone text-charcoal antialiased">{children}</body>
     </html>
   );
 }

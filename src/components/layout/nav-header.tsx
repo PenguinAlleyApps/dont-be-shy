@@ -1,30 +1,39 @@
 "use client";
 
-import { Snowflake } from "lucide-react";
+import Link from "next/link";
+import { Lockup } from "@/components/brand/logo";
 
+/**
+ * Internal nav for /setup, /interview, /results.
+ * Landing page (/) uses its own inline header for tighter control over rhythm.
+ */
 export function NavHeader() {
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <a
+    <header
+      className="border-b px-6 py-4 sm:px-10"
+      style={{ borderColor: "var(--color-charcoal-soft)", background: "var(--color-bone)" }}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <Link
           href="/"
           aria-label="Don&apos;t Be Shy home"
-          className="flex items-center gap-2 font-bold text-indigo-600"
+          className="transition-opacity hover:opacity-70"
+          style={{ color: "var(--color-charcoal)" }}
         >
-          <Snowflake aria-hidden="true" className="h-6 w-6" />
-          <span className="text-lg">Don&rsquo;t Be Shy</span>
-        </a>
-        <nav aria-label="Primary" className="flex items-center gap-4 text-sm text-slate-600">
-          <a href="/" className="hover:text-indigo-600 transition-colors">
-            Home
-          </a>
+          <Lockup size={24} ink="var(--color-charcoal)" spark="var(--color-coral)" />
+        </Link>
+        <nav
+          aria-label="Primary"
+          className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest"
+          style={{ color: "var(--color-deep-green)" }}
+        >
           <a
             href="https://github.com/PenguinAlleyApps/dont-be-shy"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-indigo-600 transition-colors"
+            className="transition-opacity hover:opacity-70"
           >
-            GitHub
+            Source ↗
           </a>
         </nav>
       </div>
