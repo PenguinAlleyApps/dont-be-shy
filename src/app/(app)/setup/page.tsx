@@ -7,6 +7,7 @@ import { RoleTemplates } from "@/components/setup/role-templates";
 import { ModeSelector } from "@/components/setup/mode-selector";
 import { ApiKeyInput } from "@/components/setup/api-key-input";
 import { getApiKey, saveApiKey } from "@/lib/api-key";
+import { authHeader } from "@/lib/pro-client";
 import type { RoleType } from "@/types/interview";
 
 const ROLE_TITLES: Partial<Record<RoleType, string>> = {
@@ -56,7 +57,7 @@ export default function SetupPage() {
     try {
       const res = await fetch("/api/interview/start", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({
           jobTitle: jobTitle.trim(),
           jobDescription: jobDescription.trim() || undefined,

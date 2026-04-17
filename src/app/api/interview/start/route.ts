@@ -12,7 +12,9 @@ import {
   ANTHROPIC_API_KEY,
   DEFAULT_INTERVIEWER_MODEL,
   DEMO_MAX_QUESTIONS,
+  DEMO_MODE_ENABLED,
 } from "@/lib/config";
+import { extractBearer, verifyProToken } from "@/lib/pro-token";
 import type { RoleType } from "@/types/interview";
 
 export async function POST(request: NextRequest) {
@@ -40,6 +42,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "jobTitle is required" }, { status: 400 });
     }
 
+    // Pro entitlement: signed JWT in Authorization header bypasses demo cap
+    const proToken = extractBearer(request.headers.get("authorization"));
+    const proPayload = proToken ? await verifyProToken(proToken) : null;
+    const isPro = !!proPayload;
+
     const apiKey = userKey || ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -48,7 +55,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isDemo = !userKey;
+    // Demo path is gated by both server kill switch + presence of user key / Pro
+    const isDemo = !userKey && !isPro;
+    if (isDemo && !DEMO_MODE_ENABLED) {
+      return NextResponse.json(
+        {
+          error:
+            "Demo mode temporarily disabled due to high traffic. Bring your own Anthropic key (free, settings panel) or upgrade to Pro at /pricing.",
+          code: "demo_disabled",
+        },
+        { status: 429 },
+      );
+    }
+
     const effectiveCount = isDemo
       ? Math.min(questionCount, DEMO_MAX_QUESTIONS)
       : questionCount;
@@ -97,6 +116,7 @@ export async function POST(request: NextRequest) {
       system,
       openingMessage,
       isDemo,
+      isPro,
       questionCount: effectiveCount,
     });
   } catch (err) {

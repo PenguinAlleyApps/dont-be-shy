@@ -17,6 +17,9 @@ export default function LandingPage() {
             <Lockup size={26} ink="var(--color-charcoal)" spark="var(--color-coral)" />
           </Link>
           <nav aria-label="Primary" className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-deep-green">
+            <Link href="/pricing" className="transition-opacity hover:opacity-70">
+              Pricing
+            </Link>
             <a
               href="https://github.com/PenguinAlleyApps/dont-be-shy"
               target="_blank"
