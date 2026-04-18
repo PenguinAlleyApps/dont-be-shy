@@ -1,6 +1,12 @@
 /**
  * POST /api/interview/start
  * Generate persona + questions, return opening message.
+ *
+ * v0.4 hardening enforces (in order):
+ *   1. Pro JWT (Authorization Bearer) — bypasses demo cap, subject to Pro rate limit
+ *   2. User-supplied Anthropic key — unmetered (user pays Anthropic directly)
+ *   3. Demo mode — capped at DEMO_MAX_QUESTIONS per session, DEMO_MAX_SESSIONS_PER_HOUR
+ *      per IP, AND DEMO_MONTHLY_CAP_CENTS aggregate spend (circuit breaker)
  */
 import { NextRequest, NextResponse } from "next/server";
 import { generatePersona } from "@/lib/ai/persona-generator";
@@ -15,7 +21,20 @@ import {
   DEMO_MODE_ENABLED,
 } from "@/lib/config";
 import { extractBearer, verifyProToken } from "@/lib/pro-token";
+import {
+  checkProRateLimit,
+  checkDemoRateLimit,
+  recordSpendAndCheck,
+} from "@/lib/db";
 import type { RoleType } from "@/types/interview";
+
+export const runtime = "nodejs";
+
+function getClientIp(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return request.headers.get("x-real-ip") || "unknown";
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +61,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "jobTitle is required" }, { status: 400 });
     }
 
-    // Pro entitlement: signed JWT in Authorization header bypasses demo cap
+    /* ----- Tier resolution -------------------------------------------------- */
+
     const proToken = extractBearer(request.headers.get("authorization"));
     const proPayload = proToken ? await verifyProToken(proToken) : null;
     const isPro = !!proPayload;
@@ -55,31 +75,78 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Demo path is gated by both server kill switch + presence of user key / Pro
     const isDemo = !userKey && !isPro;
-    if (isDemo && !DEMO_MODE_ENABLED) {
-      return NextResponse.json(
-        {
-          error:
-            "Demo mode temporarily disabled due to high traffic. Bring your own Anthropic key (free, settings panel) or upgrade to Pro at /pricing.",
-          code: "demo_disabled",
-        },
-        { status: 429 },
-      );
+
+    /* ----- Pro rate limit --------------------------------------------------- */
+
+    if (isPro && proPayload) {
+      const limit = await checkProRateLimit(proPayload.jti);
+      if (!limit.allowed) {
+        return NextResponse.json(
+          {
+            error: `You hit the daily Pro limit (${limit.cap} sessions). Resets at UTC midnight. Reach out at hello@penguinalley.com if this is wrong.`,
+            code: "pro_daily_cap",
+          },
+          { status: 429 },
+        );
+      }
+      // Track Pro spend (informational only — no cap)
+      await recordSpendAndCheck("pro").catch(() => {});
     }
+
+    /* ----- Demo mode gates -------------------------------------------------- */
+
+    if (isDemo) {
+      if (!DEMO_MODE_ENABLED) {
+        return NextResponse.json(
+          {
+            error:
+              "Demo mode temporarily disabled. Bring your own Anthropic key (free) or upgrade to Pro at /pricing.",
+            code: "demo_disabled",
+          },
+          { status: 429 },
+        );
+      }
+
+      // Per-IP rate limit (5 sessions/hr per Ledger spec)
+      const ip = getClientIp(request);
+      const ipLimit = await checkDemoRateLimit(ip);
+      if (!ipLimit.allowed) {
+        return NextResponse.json(
+          {
+            error: `Demo limit hit (${ipLimit.cap} sessions/hour). Try again next hour, or upgrade to Pro at /pricing for unlimited practice.`,
+            code: "demo_rate_limit",
+          },
+          { status: 429 },
+        );
+      }
+
+      // Monthly cost circuit breaker
+      const breaker = await recordSpendAndCheck("demo");
+      if (!breaker.allowed) {
+        return NextResponse.json(
+          {
+            error:
+              "Free demo budget exhausted for this month. Bring your own Anthropic key (free) or upgrade to Pro at /pricing.",
+            code: "demo_monthly_cap",
+          },
+          { status: 429 },
+        );
+      }
+    }
+
+    /* ----- Generate the interview ------------------------------------------ */
 
     const effectiveCount = isDemo
       ? Math.min(questionCount, DEMO_MAX_QUESTIONS)
       : questionCount;
     const effectiveModel = model || DEFAULT_INTERVIEWER_MODEL;
 
-    // Check if we have a pre-built template
     const template = ROLE_TEMPLATES.find((t) => t.id === roleType);
     let questions;
     let personaText: string;
 
     if (template && template.questions.length > 0) {
-      // Use static template — instant, no generation latency
       questions = sampleQuestions(template.questions, effectiveCount);
       personaText = await generatePersona(
         jobTitle,
@@ -89,7 +156,6 @@ export async function POST(request: NextRequest) {
         companyName,
       );
     } else {
-      // Generate dynamically from job description
       const [persona, generatedQuestions] = await Promise.all([
         generatePersona(jobTitle, apiKey, effectiveModel, jobDescription, companyName),
         generateQuestions(jobTitle, apiKey, effectiveModel, jobDescription, effectiveCount + 3),
@@ -98,7 +164,6 @@ export async function POST(request: NextRequest) {
       questions = sampleQuestions(generatedQuestions, effectiveCount);
     }
 
-    // Build system prompt and get opening message
     const system = buildSystemPrompt(personaText, questions);
     const openingMessage = await nextTurn(
       [{ role: "user", content: "Begin the interview now. Start with your warm opener." }],

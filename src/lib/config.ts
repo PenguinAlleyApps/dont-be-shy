@@ -42,6 +42,18 @@ export type ProSku = keyof typeof PRO_SKUS;
 /** Demo kill switch — set DEMO_MODE_ENABLED=false in Vercel to disable demo if costs spike. */
 export const DEMO_MODE_ENABLED = process.env.DEMO_MODE_ENABLED !== "false";
 
+/** Supabase persistence — used for one-shot activation, revoke list, rate limits, cost tracker. */
+export const SUPABASE_URL = process.env.SUPABASE_URL || "";
+export const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
+
+/** Hard limits (Ledger spec) */
+export const PRO_MAX_SESSIONS_PER_DAY = Number(process.env.PRO_MAX_SESSIONS_PER_DAY ?? 30);
+export const DEMO_MAX_SESSIONS_PER_HOUR = Number(process.env.DEMO_MAX_SESSIONS_PER_HOUR ?? 5);
+/** Estimated cost in cents per session (interviewer + judge × ~6 turns). Used for spend tracker. */
+export const COST_CENTS_PER_SESSION = Number(process.env.COST_CENTS_PER_SESSION ?? 21);
+/** Monthly hard cap for demo-mode spend in cents. Default $300. */
+export const DEMO_MONTHLY_CAP_CENTS = Number(process.env.DEMO_MONTHLY_CAP_CENTS ?? 30000);
+
 /** Public app URL — used in Stripe success/cancel URLs. */
 export const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||

@@ -1,15 +1,14 @@
 /**
- * Pro entitlement tokens — stateless JWT.
+ * Pro entitlement tokens — signed JWT with server-side revoke check.
  *
- * Why stateless: we ship without a user database. Token contains expiry +
- * sku; server verifies signature; no DB lookup needed.
- *
- * Trade-off: revocation requires a deny-list (not implemented). For a $19
- * 7-day product this is acceptable — refunds are rare and handled manually
- * via Stripe dashboard.
+ * v0.4 changes:
+ *  - Adds a `jti` (token id) so individual tokens can be revoked
+ *  - verifyProToken is async and consults the revoke deny-list
  */
 import { SignJWT, jwtVerify } from "jose";
+import { randomBytes } from "node:crypto";
 import { PRO_TOKEN_SECRET, PRO_SKUS, type ProSku } from "./config";
+import { isRevoked } from "./db";
 
 const ISSUER = "dont-be-shy.vercel.app";
 const AUDIENCE = "dont-be-shy:pro";
@@ -21,46 +20,61 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(PRO_TOKEN_SECRET);
 }
 
+function newJti(): string {
+  return randomBytes(16).toString("hex");
+}
+
 export interface ProTokenPayload {
   sku: ProSku;
   stripeSessionId: string;
-  /** Unix seconds */
+  jti: string;
   exp: number;
-  /** Unix seconds */
   iat: number;
 }
 
 export async function mintProToken(
   sku: ProSku,
   stripeSessionId: string,
-): Promise<string> {
+): Promise<{ token: string; jti: string; expiresAt: number }> {
   const meta = PRO_SKUS[sku];
   if (!meta) throw new Error(`Unknown SKU: ${sku}`);
 
   const issuedAt = Math.floor(Date.now() / 1000);
   const expiresAt = issuedAt + meta.durationDays * 24 * 60 * 60;
+  const jti = newJti();
 
-  return new SignJWT({ sku, stripeSessionId })
+  const token = await new SignJWT({ sku, stripeSessionId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt(issuedAt)
     .setExpirationTime(expiresAt)
     .setIssuer(ISSUER)
     .setAudience(AUDIENCE)
+    .setJti(jti)
     .sign(getSecret());
+
+  return { token, jti, expiresAt };
 }
 
+/** Verify signature + expiry + revoke deny-list. Returns null if invalid for any reason. */
 export async function verifyProToken(
   token: string,
 ): Promise<ProTokenPayload | null> {
+  let payload: ProTokenPayload;
   try {
-    const { payload } = await jwtVerify(token, getSecret(), {
+    const result = await jwtVerify(token, getSecret(), {
       issuer: ISSUER,
       audience: AUDIENCE,
     });
-    return payload as unknown as ProTokenPayload;
+    payload = result.payload as unknown as ProTokenPayload;
   } catch {
     return null;
   }
+
+  if (!payload.jti) return null;
+  // Revoked tokens (refunds, abuse) are denied even if signature is valid
+  if (await isRevoked(payload.jti)) return null;
+
+  return payload;
 }
 
 /** Extract Bearer token from Authorization header. */
