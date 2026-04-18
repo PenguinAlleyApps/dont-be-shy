@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Mic, MicOff, Send } from "lucide-react";
 import { isSTTSupported, startListening, stopListening } from "@/lib/audio/speech-recognition";
+import { stopSpeaking } from "@/lib/audio/speech-synthesis";
 
 interface UserInputProps {
   mode: "voice" | "text";
@@ -10,11 +11,24 @@ interface UserInputProps {
   disabled?: boolean;
 }
 
+const STT_ERROR_COPY: Record<string, string> = {
+  "not-allowed": "Mic permission was denied. Click the lock icon in the URL bar and allow microphone, then try again.",
+  "service-not-allowed": "Mic permission was denied. Click the lock icon in the URL bar and allow microphone, then try again.",
+  "audio-capture": "No microphone detected. Plug one in or check your system audio input settings.",
+  network: "Speech recognition needs internet. Check your connection and try again.",
+  aborted: "Recording was interrupted. Click the mic to try again.",
+};
+
 export function UserInput({ mode, onSubmit, disabled }: UserInputProps) {
   const [text, setText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [interimText, setInterimText] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const accumulatedRef = useRef("");
+  // userIntendsRecordingRef tracks whether the user wants to be recording.
+  // Web Speech API auto-stops after a few seconds of silence even with
+  // continuous=true. We use this ref to know whether to silently restart.
+  const userIntendsRecordingRef = useRef(false);
 
   function handleTextSubmit() {
     if (!text.trim()) return;
@@ -29,8 +43,38 @@ export function UserInput({ mode, onSubmit, disabled }: UserInputProps) {
     }
   }
 
+  function beginListening() {
+    startListening({
+      onInterim: (t) => setInterimText(t),
+      onFinal: (t) => {
+        accumulatedRef.current += " " + t;
+        setInterimText("");
+      },
+      onError: (err) => {
+        console.error("STT error:", err);
+        userIntendsRecordingRef.current = false;
+        setIsRecording(false);
+        setErrorMsg(STT_ERROR_COPY[err] ?? `Mic error: ${err}. Click to retry.`);
+      },
+      onEnd: () => {
+        // Chrome stops recognition after silence even with continuous=true.
+        // If the user is still holding the mic open, restart silently.
+        if (userIntendsRecordingRef.current) {
+          try {
+            beginListening();
+            return;
+          } catch (_e) {
+            // fall through to stop
+          }
+        }
+        setIsRecording(false);
+      },
+    });
+  }
+
   function toggleRecording() {
     if (isRecording) {
+      userIntendsRecordingRef.current = false;
       stopListening();
       setIsRecording(false);
       const finalText = accumulatedRef.current.trim();
@@ -40,21 +84,16 @@ export function UserInput({ mode, onSubmit, disabled }: UserInputProps) {
       accumulatedRef.current = "";
       setInterimText("");
     } else {
+      // CRITICAL: stop the interviewer's voice before opening the mic.
+      // Otherwise the speaker output bleeds into the mic and Web Speech
+      // picks up the interviewer instead of the user (v0.8 regression).
+      stopSpeaking();
       accumulatedRef.current = "";
       setInterimText("");
+      setErrorMsg(null);
+      userIntendsRecordingRef.current = true;
       setIsRecording(true);
-      startListening({
-        onInterim: (t) => setInterimText(t),
-        onFinal: (t) => {
-          accumulatedRef.current += " " + t;
-          setInterimText("");
-        },
-        onError: (err) => {
-          console.error("STT error:", err);
-          setIsRecording(false);
-        },
-        onEnd: () => setIsRecording(false),
-      });
+      beginListening();
     }
   }
 
@@ -63,6 +102,20 @@ export function UserInput({ mode, onSubmit, disabled }: UserInputProps) {
 
     return (
       <div className="space-y-2">
+        {errorMsg && (
+          <div
+            role="alert"
+            className="rounded-lg px-3 py-2 text-sm"
+            style={{
+              background: "var(--surface-accent)",
+              color: "var(--color-oxblood)",
+              border: "1px solid var(--color-oxblood)",
+            }}
+          >
+            {errorMsg}
+          </div>
+        )}
+
         {(accumulatedRef.current || interimText) && (
           <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
             {accumulatedRef.current}
