@@ -5,11 +5,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { RUBRIC } from "./rubric";
-import type { QuestionMeta, ConversationMessage } from "@/types/interview";
+import type { InterviewQuestion, ConversationMessage } from "@/types/interview";
 
 export function buildSystemPrompt(
   personaText: string,
-  questions: QuestionMeta[],
+  questions: InterviewQuestion[],
 ): string {
   return `You are running a mock interview in ENGLISH ONLY.
 

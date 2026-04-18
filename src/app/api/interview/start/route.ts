@@ -12,13 +12,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { generatePersona } from "@/lib/ai/persona-generator";
 import { generateQuestions } from "@/lib/ai/question-generator";
 import { buildSystemPrompt, nextTurn } from "@/lib/ai/interviewer";
-import { sampleQuestions } from "@/lib/interview/question-sampler";
+import { sampleQuestions, sampleMixedQuestions } from "@/lib/interview/question-sampler";
 import { ROLE_TEMPLATES } from "@/lib/interview/templates";
 import {
   ANTHROPIC_API_KEY,
   DEFAULT_INTERVIEWER_MODEL,
   DEMO_MAX_QUESTIONS,
   DEMO_MODE_ENABLED,
+  CODING_MODE_ENABLED,
 } from "@/lib/config";
 import { extractBearer, verifyProToken } from "@/lib/pro-token";
 import {
@@ -151,7 +152,12 @@ export async function POST(request: NextRequest) {
     let personaText: string;
 
     if (template && template.questions.length > 0) {
-      questions = sampleQuestions(template.questions, effectiveCount);
+      const codingBank = template.codingQuestions ?? [];
+      // Demo gets talk-only to stay cheap; Pro and full sessions get the mix.
+      const useCoding = CODING_MODE_ENABLED && !isDemo && codingBank.length > 0;
+      questions = useCoding
+        ? sampleMixedQuestions(template.questions, codingBank, effectiveCount, 0.4)
+        : sampleQuestions(template.questions, effectiveCount);
       personaText = await generatePersona(
         jobTitle,
         apiKey,

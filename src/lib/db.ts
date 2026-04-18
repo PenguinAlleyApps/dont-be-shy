@@ -240,3 +240,42 @@ export async function readSpend(): Promise<{ demoCents: number; proCents: number
     proCents: (data?.pro_cents as number | undefined) ?? 0,
   };
 }
+
+/* -------------------------------------------------------------------------- */
+/* Session replay — coding turn keystroke streams + final verdict             */
+/* -------------------------------------------------------------------------- */
+
+export interface ReplayInsert {
+  session_id: string;
+  turn_idx: number;
+  question_id: string;
+  language: string;
+  code_snapshots: unknown; // CodeSnapshot[]
+  final_code: string;
+  final_verdict: unknown; // CodeVerdict
+  duration_ms: number;
+}
+
+export async function saveReplay(replay: ReplayInsert): Promise<void> {
+  const { error } = await getDb()
+    .from("dbs_session_replay")
+    .upsert(replay, { onConflict: "session_id,turn_idx" });
+  if (error) {
+    console.error("[saveReplay]", error.message);
+  }
+}
+
+export async function loadReplay(
+  sessionId: string,
+): Promise<ReplayInsert[]> {
+  const { data, error } = await getDb()
+    .from("dbs_session_replay")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("turn_idx", { ascending: true });
+  if (error) {
+    console.error("[loadReplay]", error.message);
+    return [];
+  }
+  return (data as ReplayInsert[] | null) ?? [];
+}

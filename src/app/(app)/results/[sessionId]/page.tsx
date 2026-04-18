@@ -4,8 +4,27 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Download, RotateCcw, ArrowLeft } from "lucide-react";
 import { ScoreCard } from "@/components/interview/score-card";
+import { CodeVerdictCard } from "@/components/interview/code-verdict";
+import { ReplayPlayer } from "@/components/interview/replay-player";
 import { aggregateScores } from "@/lib/interview/scoring";
-import type { TurnRecord, JudgeVerdict, AggregateScores } from "@/types/interview";
+import {
+  isCodingQuestion,
+  type TurnRecord,
+  type JudgeVerdict,
+  type CodeVerdict,
+  type AggregateScores,
+} from "@/types/interview";
+
+function isCodeVerdict(v: unknown): v is CodeVerdict {
+  return !!v && typeof v === "object" && "scores" in (v as Record<string, unknown>);
+}
+
+function questionLabel(turn: TurnRecord): string {
+  if (isCodingQuestion(turn.questionMeta)) {
+    return `${turn.questionMeta.title} (${turn.questionMeta.language})`;
+  }
+  return turn.questionMeta.question;
+}
 
 function scoreColor(value: number): string {
   if (value >= 4) return "var(--color-deep-green)";
@@ -192,13 +211,27 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
         </h3>
         <div className="mt-4 space-y-3">
           {turns.map((turn, i) => {
-            const hasVerdict = !("error" in turn.judge);
+            const isErr = !!(turn.judge && typeof turn.judge === "object" && "error" in turn.judge);
             const isExpanded = expandedTurn === i;
-            const v = turn.judge as JudgeVerdict;
-            const avg = hasVerdict
-              ? (v.domain_expertise + v.english_fluency + v.structure + v.confidence) / 4
-              : 0;
+            const isCoding = isCodingQuestion(turn.questionMeta);
+            let avg = 0;
+            if (!isErr) {
+              if (isCodeVerdict(turn.judge)) {
+                const s = turn.judge.scores;
+                avg =
+                  (s.problem_understanding.score +
+                    s.approach_quality.score +
+                    s.code_quality.score +
+                    s.testing_rigor.score +
+                    s.communication.score) /
+                  5;
+              } else {
+                const v = turn.judge as JudgeVerdict;
+                avg = (v.domain_expertise + v.english_fluency + v.structure + v.confidence) / 4;
+              }
+            }
 
+            const label = questionLabel(turn);
             return (
               <div
                 key={i}
@@ -218,21 +251,21 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
                     <span
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-xs font-semibold"
                       style={{
-                        background: "var(--surface-accent)",
-                        color: "var(--color-deep-green)",
+                        background: isCoding ? "var(--color-oxblood)" : "var(--surface-accent)",
+                        color: isCoding ? "var(--color-bone)" : "var(--color-deep-green)",
                       }}
                     >
-                      {i + 1}
+                      {isCoding ? "⌨" : i + 1}
                     </span>
                     <span
                       className="truncate text-sm leading-snug"
                       style={{ color: "var(--surface-ink)" }}
                     >
-                      {turn.questionMeta.question.slice(0, 80)}
-                      {turn.questionMeta.question.length > 80 ? "..." : ""}
+                      {label.slice(0, 80)}
+                      {label.length > 80 ? "..." : ""}
                     </span>
                   </div>
-                  {hasVerdict && (
+                  {!isErr && (
                     <span
                       className="ml-3 shrink-0 font-mono text-base font-semibold"
                       style={{ color: scoreColor(avg) }}
@@ -247,21 +280,38 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
                     className="space-y-4 border-t px-5 py-5"
                     style={{ borderColor: "var(--hairline)" }}
                   >
-                    <div>
-                      <p
-                        className="font-mono text-[10px] uppercase tracking-widest"
-                        style={{ color: "var(--color-deep-green)" }}
-                      >
-                        Your response
-                      </p>
-                      <p
-                        className="mt-2 text-sm leading-relaxed"
-                        style={{ color: "var(--surface-ink)" }}
-                      >
-                        {turn.userResponse}
-                      </p>
-                    </div>
-                    {hasVerdict && <ScoreCard verdict={turn.judge as JudgeVerdict} />}
+                    {isCoding ? (
+                      <>
+                        {turn.codeSnapshots && turn.codeSnapshots.length > 0 && turn.language && (
+                          <ReplayPlayer
+                            snapshots={turn.codeSnapshots}
+                            language={turn.language}
+                            questionTitle={isCodingQuestion(turn.questionMeta) ? turn.questionMeta.title : "coding"}
+                          />
+                        )}
+                        {isCodeVerdict(turn.judge) && <CodeVerdictCard verdict={turn.judge} />}
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <p
+                            className="font-mono text-[10px] uppercase tracking-widest"
+                            style={{ color: "var(--color-deep-green)" }}
+                          >
+                            Your response
+                          </p>
+                          <p
+                            className="mt-2 text-sm leading-relaxed"
+                            style={{ color: "var(--surface-ink)" }}
+                          >
+                            {turn.userResponse}
+                          </p>
+                        </div>
+                        {!isErr && !isCodeVerdict(turn.judge) && (
+                          <ScoreCard verdict={turn.judge as JudgeVerdict} />
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
               </div>

@@ -54,10 +54,25 @@ export const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4
 /** Hard limits (Ledger spec) */
 export const PRO_MAX_SESSIONS_PER_DAY = Number(process.env.PRO_MAX_SESSIONS_PER_DAY ?? 30);
 export const DEMO_MAX_SESSIONS_PER_HOUR = Number(process.env.DEMO_MAX_SESSIONS_PER_HOUR ?? 5);
-/** Estimated cost in cents per session (interviewer + judge × ~6 turns). Used for spend tracker. */
-export const COST_CENTS_PER_SESSION = Number(process.env.COST_CENTS_PER_SESSION ?? 21);
+/** Estimated cost in cents per session (interviewer + judge × ~6 turns).
+ *  v0.9 bump: coding turns add ~14¢ on top of talk baseline due to phase-aware
+ *  judge calls (observe/milestone/submit). 21¢ → 35¢ for mixed sessions. */
+export const COST_CENTS_PER_SESSION = Number(process.env.COST_CENTS_PER_SESSION ?? 35);
 /** Monthly hard cap for demo-mode spend in cents. Default $300. */
 export const DEMO_MONTHLY_CAP_CENTS = Number(process.env.DEMO_MONTHLY_CAP_CENTS ?? 30000);
+
+/** Judge0 configuration for executing user-submitted code (C# in v0.9, more later).
+ *  - JUDGE0_URL empty → C# execution returns 503 with code `judge0_not_configured`
+ *  - Browser-runnable languages (Python via Pyodide, JS/TS via Web Worker) bypass Judge0 entirely.
+ *  - When using RapidAPI tier, set both URL and AUTH_TOKEN. */
+export const JUDGE0_URL = process.env.JUDGE0_URL || "";
+export const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN || "";
+/** Master kill switch for the v0.9 coding mode. Set CODING_MODE_ENABLED=false in
+ *  Vercel to revert to talk-only flow if costs spike or Judge0 is misbehaving. */
+export const CODING_MODE_ENABLED = process.env.CODING_MODE_ENABLED !== "false";
+
+/** Cheaper model for the silent observation pass (judge watches, doesn't surface). */
+export const DEFAULT_OBSERVE_MODEL = "claude-haiku-4-5-20251001";
 
 /** Public app URL — used in Stripe success/cancel URLs. */
 export const APP_URL =

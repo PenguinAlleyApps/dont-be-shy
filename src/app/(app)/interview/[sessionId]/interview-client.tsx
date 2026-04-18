@@ -5,13 +5,19 @@ import { useRouter } from "next/navigation";
 import { InterviewerBubble } from "@/components/interview/interviewer-bubble";
 import { UserInput } from "@/components/interview/user-input";
 import { ScoreCard } from "@/components/interview/score-card";
+import { CodingPanel } from "@/components/interview/coding-panel";
+import { CodeVerdictCard } from "@/components/interview/code-verdict";
 import { Loader2, ArrowRight } from "lucide-react";
 import { speak, stopSpeaking } from "@/lib/audio/speech-synthesis";
-import type {
-  QuestionMeta,
-  ConversationMessage,
-  TurnRecord,
-  JudgeVerdict,
+import {
+  isCodingQuestion,
+  type InterviewQuestion,
+  type ConversationMessage,
+  type TurnRecord,
+  type JudgeVerdict,
+  type CodeVerdict,
+  type CodeSnapshot,
+  type TestResult,
 } from "@/types/interview";
 
 type InterviewPhase = "loading" | "interviewer" | "user" | "judging" | "complete";
@@ -19,7 +25,7 @@ type InterviewPhase = "loading" | "interviewer" | "user" | "judging" | "complete
 interface SessionData {
   sessionId: string;
   persona: string;
-  questions: QuestionMeta[];
+  questions: InterviewQuestion[];
   system: string;
   openingMessage: string;
   mode: "voice" | "text";
@@ -27,6 +33,10 @@ interface SessionData {
   questionCount: number;
   isDemo: boolean;
   apiKey?: string;
+}
+
+function isCodeVerdict(v: unknown): v is CodeVerdict {
+  return !!v && typeof v === "object" && "scores" in (v as Record<string, unknown>);
 }
 
 export function InterviewClient({ sessionId }: { sessionId: string }) {
@@ -38,7 +48,9 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [streamingText, setStreamingText] = useState("");
   const [latestVerdict, setLatestVerdict] = useState<JudgeVerdict | null>(null);
+  const [latestCodeVerdict, setLatestCodeVerdict] = useState<CodeVerdict | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const recentTranscriptRef = useRef<string>("");
 
   useEffect(() => {
     const raw = sessionStorage.getItem(`dont-be-shy-session-${sessionId}`);
@@ -61,9 +73,78 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation, streamingText, latestVerdict]);
 
+  /**
+   * Advance to the next interviewer turn after a graded response (talk OR coding).
+   * Centralizes the streaming, conversation update, and session-complete logic
+   * so both UserInput and CodingPanel can use the same flow.
+   */
+  const advanceAfterTurn = useCallback(
+    async (
+      turn: TurnRecord,
+      updatedConv: ConversationMessage[],
+      summaryText: string,
+    ) => {
+      if (currentQuestion >= session!.questionCount - 1) {
+        setTurns((prev) => [...prev, turn]);
+        setPhase("complete");
+        sessionStorage.setItem(
+          `dont-be-shy-results-${sessionId}`,
+          JSON.stringify({
+            turns: [...turns, turn],
+            config: {
+              jobTitle: session!.jobTitle,
+              mode: session!.mode,
+              questionCount: session!.questionCount,
+            },
+          }),
+        );
+        return;
+      }
+
+      setPhase("interviewer");
+      setStreamingText("");
+
+      const turnRes = await fetch("/api/interview/turn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation: [
+            ...updatedConv,
+            { role: "user", content: `(internal: candidate just finished a coding turn — ${summaryText})` },
+          ].filter((m) => !m.content.startsWith("(internal:") || true),
+          system: session!.system,
+        }),
+      });
+
+      if (!turnRes.ok || !turnRes.body) throw new Error("Failed to get interviewer response");
+
+      const reader = turnRes.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        fullText += decoder.decode(value, { stream: true });
+        setStreamingText(fullText);
+      }
+
+      turn.interviewerText = fullText;
+      setTurns((prev) => [...prev, turn]);
+      setConversation((prev) => [...prev, { role: "assistant", content: fullText }]);
+      setStreamingText("");
+      setCurrentQuestion((prev) => prev + 1);
+      setPhase("user");
+
+      if (session!.mode === "voice" && fullText) speak(fullText).catch(() => {});
+    },
+    [currentQuestion, session, sessionId, turns],
+  );
+
   const handleUserSubmit = useCallback(async (text: string) => {
     if (!session || phase !== "user") return;
     stopSpeaking();
+    recentTranscriptRef.current = text;
     const updatedConv: ConversationMessage[] = [
       ...conversation,
       { role: "user", content: text },
@@ -79,6 +160,12 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
       good_answer_signals: [],
       followup: null,
     };
+
+    // Coding questions are handled by CodingPanel directly — see handleCodingSubmit.
+    if (isCodingQuestion(questionMeta)) {
+      setPhase("user");
+      return;
+    }
 
     try {
       const judgeRes = await fetch("/api/interview/judge", {
@@ -102,62 +189,84 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
         judge: verdict,
       };
 
-      if (currentQuestion >= session.questionCount) {
-        setTurns((prev) => [...prev, turn]);
-        setPhase("complete");
-        sessionStorage.setItem(
-          `dont-be-shy-results-${sessionId}`,
-          JSON.stringify({
-            turns: [...turns, turn],
-            config: {
-              jobTitle: session.jobTitle,
-              mode: session.mode,
-              questionCount: session.questionCount,
-            },
-          }),
-        );
-        return;
-      }
-
-      setPhase("interviewer");
-      setStreamingText("");
-
-      const turnRes = await fetch("/api/interview/turn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversation: updatedConv,
-          system: session.system,
-        }),
-      });
-
-      if (!turnRes.ok || !turnRes.body) throw new Error("Failed to get interviewer response");
-
-      const reader = turnRes.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        fullText += chunk;
-        setStreamingText(fullText);
-      }
-
-      turn.interviewerText = fullText;
-      setTurns((prev) => [...prev, turn]);
-      setConversation((prev) => [...prev, { role: "assistant", content: fullText }]);
-      setStreamingText("");
-      setCurrentQuestion((prev) => prev + 1);
-      setPhase("user");
-
-      if (session.mode === "voice" && fullText) speak(fullText).catch(() => {});
+      await advanceAfterTurn(turn, updatedConv, "talk response evaluated");
     } catch (err) {
       console.error("Interview turn error:", err);
       setPhase("user");
     }
-  }, [session, phase, conversation, currentQuestion, turns, sessionId]);
+  }, [session, phase, conversation, currentQuestion, advanceAfterTurn]);
+
+  const handleCodingSubmit = useCallback(
+    async (payload: {
+      finalCode: string;
+      testResults: TestResult[];
+      verdict: CodeVerdict | { error: string; raw?: string };
+      snapshots: CodeSnapshot[];
+      durationMs: number;
+    }) => {
+      if (!session || phase !== "user") return;
+      stopSpeaking();
+      const questionMeta = session.questions[currentQuestion];
+      if (!questionMeta || !isCodingQuestion(questionMeta)) return;
+
+      setPhase("judging");
+
+      if (isCodeVerdict(payload.verdict)) setLatestCodeVerdict(payload.verdict);
+      setLatestVerdict(null);
+
+      const summaryText = `solved ${questionMeta.title}, ${payload.testResults.filter((t) => t.passed).length}/${payload.testResults.length} tests passed`;
+      const updatedConv: ConversationMessage[] = [
+        ...conversation,
+        { role: "user", content: `[code submission] ${summaryText}` },
+      ];
+      setConversation(updatedConv);
+
+      const turn: TurnRecord = {
+        idx: currentQuestion + 1,
+        questionMeta,
+        interviewerText: "",
+        userResponse: payload.finalCode,
+        judge: payload.verdict,
+        codeSnapshots: payload.snapshots,
+        finalCode: payload.finalCode,
+        language: questionMeta.language,
+        testResults: payload.testResults,
+      };
+
+      // Persist replay (best effort, soft-fail)
+      fetch("/api/interview/replay/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          turn_idx: currentQuestion + 1,
+          question_id: questionMeta.id,
+          language: questionMeta.language,
+          code_snapshots: payload.snapshots,
+          final_code: payload.finalCode,
+          final_verdict: payload.verdict,
+          duration_ms: payload.durationMs,
+        }),
+      }).catch(() => {});
+
+      try {
+        await advanceAfterTurn(turn, updatedConv, summaryText);
+      } catch (err) {
+        console.error("coding advance error:", err);
+        setPhase("user");
+      }
+    },
+    [session, phase, conversation, currentQuestion, sessionId, advanceAfterTurn],
+  );
+
+  const handleCodingProbe = useCallback(
+    (probe: string) => {
+      if (session?.mode === "voice") {
+        speak(probe).catch(() => {});
+      }
+    },
+    [session?.mode],
+  );
 
   if (!session || phase === "loading") {
     return (
@@ -287,15 +396,42 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
           <div ref={chatEndRef} />
         </div>
 
-        {phase === "user" && (
-          <div className="border-t p-5" style={{ borderColor: "var(--hairline)" }}>
-            <UserInput mode={session.mode} onSubmit={handleUserSubmit} disabled={phase !== "user"} />
-          </div>
-        )}
+        {phase === "user" && (() => {
+          const currentQ = session.questions[currentQuestion];
+          if (currentQ && isCodingQuestion(currentQ)) {
+            return (
+              <div className="border-t p-5" style={{ borderColor: "var(--hairline)" }}>
+                <CodingPanel
+                  question={currentQ}
+                  recentTranscript={recentTranscriptRef.current}
+                  onSubmit={handleCodingSubmit}
+                  onProbe={handleCodingProbe}
+                  disabled={false}
+                />
+              </div>
+            );
+          }
+          return (
+            <div className="border-t p-5" style={{ borderColor: "var(--hairline)" }}>
+              <UserInput mode={session.mode} onSubmit={handleUserSubmit} disabled={phase !== "user"} />
+            </div>
+          );
+        })()}
       </section>
 
       {/* Score sidebar */}
       <aside className="mt-4 w-full space-y-4 overflow-y-auto lg:mt-0 lg:w-80" aria-label="Score sidebar">
+        {latestCodeVerdict && (
+          <div>
+            <p
+              className="mb-2 font-mono text-[11px] uppercase tracking-[0.22em]"
+              style={{ color: "var(--color-deep-green)" }}
+            >
+              Latest coding verdict
+            </p>
+            <CodeVerdictCard verdict={latestCodeVerdict} />
+          </div>
+        )}
         {latestVerdict && (
           <div>
             <p
@@ -325,14 +461,28 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
             <div className="mt-3 space-y-2">
               {turns.map((turn, i) => {
                 const v = turn.judge;
-                const hasScore = !("error" in v);
-                const avg = hasScore
-                  ? ((v as JudgeVerdict).domain_expertise +
-                      (v as JudgeVerdict).english_fluency +
-                      (v as JudgeVerdict).structure +
-                      (v as JudgeVerdict).confidence) /
-                    4
-                  : 0;
+                const isErr = !!(v && typeof v === "object" && "error" in v);
+                let avg = 0;
+                let label = "—";
+                if (!isErr) {
+                  if (isCodeVerdict(v)) {
+                    const s = v.scores;
+                    avg =
+                      (s.problem_understanding.score +
+                        s.approach_quality.score +
+                        s.code_quality.score +
+                        s.testing_rigor.score +
+                        s.communication.score) /
+                      5;
+                    label = `${avg.toFixed(1)} ⌨`;
+                  } else {
+                    const jv = v as JudgeVerdict;
+                    avg =
+                      (jv.domain_expertise + jv.english_fluency + jv.structure + jv.confidence) /
+                      4;
+                    label = avg.toFixed(1);
+                  }
+                }
                 const color =
                   avg >= 4
                     ? "var(--color-deep-green)"
@@ -345,9 +495,7 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
                     className="flex items-baseline justify-between font-mono text-xs"
                   >
                     <span style={{ color: "var(--muted)" }}>Q{i + 1}</span>
-                    <span style={{ color, fontWeight: 600 }}>
-                      {hasScore ? avg.toFixed(1) : "—"}
-                    </span>
+                    <span style={{ color, fontWeight: 600 }}>{label}</span>
                   </div>
                 );
               })}

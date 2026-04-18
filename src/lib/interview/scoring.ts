@@ -5,8 +5,14 @@
 
 import type { TurnRecord, AggregateScores, JudgeVerdict } from "@/types/interview";
 
+/** True iff judge is a talk-style JudgeVerdict (not a CodeVerdict and not an error). */
 function isValidVerdict(judge: TurnRecord["judge"]): judge is JudgeVerdict {
-  return typeof judge === "object" && !("error" in judge);
+  if (!judge || typeof judge !== "object") return false;
+  const obj = judge as unknown as Record<string, unknown>;
+  if ("error" in obj) return false;
+  // CodeVerdict has a "scores" object; JudgeVerdict has flat domain_expertise/etc.
+  if ("scores" in obj) return false;
+  return "domain_expertise" in obj;
 }
 
 export function aggregateScores(turns: TurnRecord[]): AggregateScores {

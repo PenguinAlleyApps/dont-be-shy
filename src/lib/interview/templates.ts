@@ -3,7 +3,7 @@
  * Covers tech + non-tech roles for instant start (no generation latency).
  */
 
-import type { RoleTemplate, QuestionMeta } from "@/types/interview";
+import type { RoleTemplate, QuestionMeta, CodingQuestion } from "@/types/interview";
 
 const softwareEngineerQuestions: QuestionMeta[] = [
   {
@@ -257,14 +257,292 @@ const uxDesignerQuestions: QuestionMeta[] = [
   },
 ];
 
+/* -------------------------------------------------------------------------- */
+/* Backend Engineer (.NET-friendly) — talk + coding for SoftServe-style rounds */
+/* -------------------------------------------------------------------------- */
+
+const backendQuestions: QuestionMeta[] = [
+  {
+    id: "be-001",
+    category: "technical",
+    difficulty: "medium",
+    question: "Walk me through how you'd design a REST API for a multi-tenant SaaS where some endpoints are tenant-scoped and others are global.",
+    good_answer_signals: ["Tenant identification (header, subdomain, JWT claim)", "Authorization layer per tenant", "Schema isolation strategy", "Cache key partitioning"],
+    followup: "How do you prevent a buggy global endpoint from leaking data across tenants?",
+  },
+  {
+    id: "be-002",
+    category: "technical",
+    difficulty: "medium",
+    question: "Explain how async/await works at the thread-pool level — and a real bug you've debugged caused by misusing it.",
+    good_answer_signals: ["Continuations on the SynchronizationContext or thread pool", "Avoid .Result/.Wait deadlocks", "ConfigureAwait(false) in libraries", "Specific bug example"],
+    followup: "When does adding async actually slow things down?",
+  },
+  {
+    id: "be-003",
+    category: "scenario",
+    difficulty: "hard",
+    question: "Your service hits a third-party API that becomes flaky 1% of the time. Walk me through making the integration robust without making the system slower for the 99% case.",
+    good_answer_signals: ["Retry with exponential backoff + jitter", "Circuit breaker (Polly / Resilience4Net)", "Timeout budget", "Idempotency keys", "Async retry vs sync fast-fail"],
+    followup: "How do you decide between retrying inline vs queueing for later retry?",
+  },
+  {
+    id: "be-004",
+    category: "behavioral",
+    difficulty: "medium",
+    question: "Tell me about a production incident you were the responder for. STAR format.",
+    good_answer_signals: ["Situation framed", "Concrete diagnosis steps", "Decisions under uncertainty", "Outcome with timing", "Postmortem action"],
+    followup: "What changed in the system or the process after that incident?",
+  },
+  {
+    id: "be-005",
+    category: "closing",
+    difficulty: "easy",
+    question: "What do you want to know about our backend stack, on-call rotation, or how we ship code?",
+    good_answer_signals: ["Asks about deploy frequency", "Asks about test culture", "Asks about who owns Postgres / observability", "Asks about on-call load"],
+    followup: null,
+  },
+];
+
+const backendCodingQuestions: CodingQuestion[] = [
+  {
+    id: "be-code-001",
+    category: "coding",
+    difficulty: "easy",
+    title: "FizzBuzz with twist",
+    prompt: "Read an integer N from stdin. Print numbers 1..N, one per line. For multiples of 3 print `Fizz`, multiples of 5 print `Buzz`, both print `FizzBuzz`. Then print the COUNT of FizzBuzz lines as the last line.",
+    language: "csharp",
+    starterCode: `using System;
+
+class Program {
+    static void Main() {
+        int n = int.Parse(Console.ReadLine());
+        // your code here
+    }
+}`,
+    testCases: [
+      { name: "N=15", input: "15", expected: "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n1" },
+      { name: "N=5", input: "5", expected: "1\n2\nFizz\n4\nBuzz\n0" },
+    ],
+    solutionHint: "Track a counter for FizzBuzz hits separately and print it after the loop.",
+    phaseExpectations: {
+      clarify: "Is the FizzBuzz count line in addition to the 1..N lines, or replacing the last line?",
+      design: "I'll loop 1..N, build each line with conditionals, and increment a fizzbuzz counter when both apply.",
+    },
+  },
+  {
+    id: "be-code-002",
+    category: "coding",
+    difficulty: "medium",
+    title: "Word frequency",
+    prompt: "Read a single line of text from stdin. Output each unique word (case-insensitive, split on whitespace) and its count, sorted by count DESC then word ASC. Format: `word: count`, one per line.",
+    language: "csharp",
+    starterCode: `using System;
+using System.Linq;
+using System.Collections.Generic;
+
+class Program {
+    static void Main() {
+        string line = Console.ReadLine() ?? "";
+        // your code here
+    }
+}`,
+    testCases: [
+      { name: "tie sort", input: "the cat and the dog", expected: "the: 2\nand: 1\ncat: 1\ndog: 1" },
+      { name: "case insensitive", input: "Cat cat CAT dog", expected: "cat: 3\ndog: 1" },
+    ],
+    solutionHint: "Use a Dictionary<string,int>, then OrderByDescending(count).ThenBy(word).",
+    phaseExpectations: {
+      design: "Tokenize, lowercase, count with a dictionary, then sort by (-count, word).",
+    },
+  },
+  {
+    id: "be-code-003",
+    category: "coding",
+    difficulty: "medium",
+    title: "Idempotent retry counter",
+    prompt: "Implement a function `solve(input)` that takes a list of `request_id` strings (one per line). Return the count of UNIQUE request_ids — the count after deduping. Print the result.",
+    language: "python",
+    starterCode: `def solve(input):
+    """input is a string with one request_id per line. Return an int."""
+    # your code here
+    return 0
+`,
+    testCases: [
+      { name: "all dupes", input: "\"req-1\\nreq-1\\nreq-1\"", expected: "1" },
+      { name: "mixed", input: "\"a\\nb\\na\\nc\\nb\"", expected: "3" },
+      { name: "empty", input: "\"\"", expected: "0" },
+    ],
+    solutionHint: "Split on newline, filter empty strings, wrap in set(), return len().",
+    phaseExpectations: {
+      clarify: "Should empty lines count as a unique id? (No — filter them.)",
+    },
+  },
+  {
+    id: "be-code-004",
+    category: "coding",
+    difficulty: "hard",
+    title: "Rate limiter (token bucket)",
+    prompt: "Read two integers from stdin on the first line: `capacity refill_per_sec`. Then read N timestamps (floats, seconds since epoch) — one per line. For each request, print `OK` if it's allowed, `LIMITED` if dropped. Bucket starts full.",
+    language: "csharp",
+    starterCode: `using System;
+using System.Collections.Generic;
+
+class Program {
+    static void Main() {
+        var first = Console.ReadLine().Split(' ');
+        int capacity = int.Parse(first[0]);
+        double refill = double.Parse(first[1]);
+        // your code here
+    }
+}`,
+    testCases: [
+      {
+        name: "burst then refill",
+        input: "2 1\n1.0\n1.1\n1.2\n2.5\n2.6",
+        expected: "OK\nOK\nLIMITED\nOK\nLIMITED",
+      },
+    ],
+    solutionHint: "Track tokens as a double. Before each request, tokens = min(capacity, tokens + (now - lastTime) * refill). If tokens >= 1: consume, OK. Else LIMITED.",
+    phaseExpectations: {
+      design: "Token bucket: maintain `tokens` and `lastTime`. On each request, refill since lastTime, then try to consume one.",
+      test: "Edge: first request always OK because bucket starts full.",
+    },
+  },
+];
+
+/* -------------------------------------------------------------------------- */
+/* Coding additions for software_engineer                                     */
+/* -------------------------------------------------------------------------- */
+
+const softwareEngineerCodingQuestions: CodingQuestion[] = [
+  {
+    id: "swe-code-001",
+    category: "coding",
+    difficulty: "easy",
+    title: "Two sum",
+    prompt: "Given an array of integers and a target, return the indices of the two numbers that add up to target. Read input as JSON: `{\"nums\": [...], \"target\": N}`. Return `[i, j]` with i < j.",
+    language: "python",
+    starterCode: `def solve(input):
+    """input is a dict {'nums': [...], 'target': N}. Return [i, j] with i < j."""
+    nums = input["nums"]
+    target = input["target"]
+    # your code here
+    return []
+`,
+    testCases: [
+      { name: "basic", input: "{\"nums\": [2, 7, 11, 15], \"target\": 9}", expected: "[0, 1]" },
+      { name: "later pair", input: "{\"nums\": [3, 2, 4], \"target\": 6}", expected: "[1, 2]" },
+      { name: "negatives", input: "{\"nums\": [-1, -2, -3, -4, -5], \"target\": -8}", expected: "[2, 4]" },
+    ],
+    solutionHint: "Hash map of value→index lets you do it in O(n).",
+    phaseExpectations: {
+      design: "I'll use a hash map: as I scan, check if (target - num) is already seen.",
+    },
+  },
+  {
+    id: "swe-code-002",
+    category: "coding",
+    difficulty: "medium",
+    title: "Anagram groups",
+    prompt: "Given an array of strings, group anagrams together. Read JSON `{\"words\": [...]}`. Return `[[group1...], [group2...]]` — each group sorted alphabetically, groups sorted by their first element.",
+    language: "javascript",
+    starterCode: `function solve(input) {
+  const words = input.words;
+  // your code here
+  return [];
+}
+`,
+    testCases: [
+      {
+        name: "basic",
+        input: "{\"words\": [\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"]}",
+        expected: "[[\"ate\",\"eat\",\"tea\"],[\"bat\"],[\"nat\",\"tan\"]]",
+      },
+      { name: "single", input: "{\"words\": [\"abc\"]}", expected: "[[\"abc\"]]" },
+    ],
+    solutionHint: "Key each word by its sorted-letters string. Map → groups → sort.",
+  },
+  {
+    id: "swe-code-003",
+    category: "coding",
+    difficulty: "medium",
+    title: "Merge intervals",
+    prompt: "Given an array of intervals `[[start, end], ...]` (already in input as JSON `{\"intervals\": [...]}`), merge any overlapping intervals and return the result sorted by start.",
+    language: "typescript",
+    starterCode: `function solve(input: { intervals: number[][] }): number[][] {
+  const intervals = input.intervals;
+  // your code here
+  return [];
+}
+`,
+    testCases: [
+      {
+        name: "overlapping",
+        input: "{\"intervals\": [[1,3],[2,6],[8,10],[15,18]]}",
+        expected: "[[1,6],[8,10],[15,18]]",
+      },
+      {
+        name: "touching",
+        input: "{\"intervals\": [[1,4],[4,5]]}",
+        expected: "[[1,5]]",
+      },
+    ],
+    solutionHint: "Sort by start. Walk through; if current.start <= last.end, merge by extending last.end = max(last.end, current.end).",
+    phaseExpectations: {
+      design: "Sort by start. Linear scan merging when overlap. O(n log n).",
+    },
+  },
+  {
+    id: "swe-code-004",
+    category: "coding",
+    difficulty: "hard",
+    title: "LRU cache size check",
+    prompt: "Implement a simple capacity tracker. Read input `{\"capacity\": K, \"ops\": [[\"put\", key, val] | [\"get\", key]]}`. After all ops, print the current set of keys in MRU→LRU order, comma-separated.",
+    language: "javascript",
+    starterCode: `function solve(input) {
+  const { capacity, ops } = input;
+  // your code here
+  // print MRU→LRU keys joined by ","
+}
+`,
+    testCases: [
+      {
+        name: "basic eviction",
+        input: "{\"capacity\": 2, \"ops\": [[\"put\",1,1],[\"put\",2,2],[\"get\",1],[\"put\",3,3]]}",
+        expected: "1,3",
+      },
+      {
+        name: "no eviction",
+        input: "{\"capacity\": 3, \"ops\": [[\"put\",\"a\",1],[\"put\",\"b\",2],[\"get\",\"a\"]]}",
+        expected: "a,b",
+      },
+    ],
+    solutionHint: "Use a Map (preserves insertion order). On get/put, delete then re-set the key to bump it to most-recent.",
+    phaseExpectations: {
+      design: "Map keeps insertion order. Re-inserting a key moves it to the end (most recent). Reverse the keys at the end for MRU first.",
+    },
+  },
+];
+
 export const ROLE_TEMPLATES: RoleTemplate[] = [
   {
     id: "software_engineer",
     name: "Software Engineer",
     description: "General software engineering — architecture, coding, debugging, system design",
     icon: "Code2",
-    categories: ["technical", "behavioral", "scenario", "closing"],
+    categories: ["technical", "behavioral", "scenario", "closing", "coding"],
     questions: softwareEngineerQuestions,
+    codingQuestions: softwareEngineerCodingQuestions,
+  },
+  {
+    id: "backend",
+    name: "Backend Engineer",
+    description: "APIs, databases, distributed systems. Coding tracks support C# and Python.",
+    icon: "Server",
+    categories: ["technical", "behavioral", "scenario", "closing", "coding"],
+    questions: backendQuestions,
+    codingQuestions: backendCodingQuestions,
   },
   {
     id: "product_manager",
