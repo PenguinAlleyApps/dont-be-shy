@@ -46,6 +46,11 @@ export const DEMO_MODE_ENABLED = process.env.DEMO_MODE_ENABLED !== "false";
 export const SUPABASE_URL = process.env.SUPABASE_URL || "";
 export const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
 
+/** ElevenLabs TTS — premium neural voice for the interviewer. */
+export const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || "";
+/** Default voice: Rachel — calm, US English female, the canonical "warm interviewer". */
+export const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+
 /** Hard limits (Ledger spec) */
 export const PRO_MAX_SESSIONS_PER_DAY = Number(process.env.PRO_MAX_SESSIONS_PER_DAY ?? 30);
 export const DEMO_MAX_SESSIONS_PER_HOUR = Number(process.env.DEMO_MAX_SESSIONS_PER_HOUR ?? 5);

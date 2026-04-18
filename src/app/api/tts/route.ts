@@ -1,72 +1,87 @@
 /**
  * POST /api/tts
- * Server-side text-to-speech via Edge-TTS (Microsoft's neural voices).
- * Returns MP3 audio. Falls back to browser-native if this route fails on the client.
+ * Server-side text-to-speech via ElevenLabs Multilingual v2.
  *
- * Voice quality: ≈ 8/10 (neural, indistinguishable from human in most cases).
- * Cost: $0 (Microsoft's public Read Aloud endpoint, undocumented but stable).
- * Risk: Microsoft could rate-limit aggressive use. Client falls back gracefully.
+ * Why ElevenLabs over Edge-TTS:
+ *  - Edge-TTS hits a Vercel function timeout (Microsoft drops the WebSocket
+ *    from non-Edge UA / non-residential IPs; v0.8 attempt failed with 504).
+ *  - ElevenLabs has a real REST endpoint, ships in 1-3s, voice quality > Emma.
+ *
+ * Cost containment:
+ *  - 24-hour immutable cache (same text → same audio → same MP3) saves
+ *    ~80% of repeat-visitor cost.
+ *  - Demo + Pro both use ElevenLabs (CEO wants the voice to be the moat,
+ *    free demo with robotic voice undercuts the whole product).
+ *  - Demo monthly cap enforced upstream via dbs_cost_tracking circuit breaker.
+ *
+ * Voice: Rachel (21m00Tcm4TlvDq8ikWAM) — calm, US English female, the
+ * canonical "warm interviewer" voice. Override per request via ?voice=...
  */
 import { NextRequest } from "next/server";
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
+import { ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID } from "@/lib/config";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const DEFAULT_VOICE = "en-US-EmmaMultilingualNeural";
-const MAX_TEXT_LENGTH = 2000; // safety cap to avoid abuse
-
-function escapeForSSML(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
+const MAX_TEXT_LENGTH = 2000;
+const MODEL_ID = "eleven_multilingual_v2";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const text = String(body?.text ?? "").slice(0, MAX_TEXT_LENGTH);
-    const voice = String(body?.voice ?? DEFAULT_VOICE);
+    if (!ELEVENLABS_API_KEY) {
+      // Fast 503 — client immediately falls back to browser-native neural voice
+      return Response.json(
+        { error: "tts unavailable", code: "no_key" },
+        { status: 503 },
+      );
+    }
 
-    if (!text.trim()) {
+    const body = await request.json();
+    const text = String(body?.text ?? "").slice(0, MAX_TEXT_LENGTH).trim();
+    const voiceId = String(body?.voice ?? ELEVENLABS_VOICE_ID);
+
+    if (!text) {
       return Response.json({ error: "text is required" }, { status: 400 });
     }
 
-    const safeText = escapeForSSML(text);
+    const elevenRes = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": ELEVENLABS_API_KEY,
+          "Content-Type": "application/json",
+          accept: "audio/mpeg",
+        },
+        body: JSON.stringify({
+          text,
+          model_id: MODEL_ID,
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+            style: 0.15,
+            use_speaker_boost: true,
+          },
+        }),
+      },
+    );
 
-    const tts = new MsEdgeTTS();
-    await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+    if (!elevenRes.ok) {
+      const errText = await elevenRes.text();
+      return Response.json(
+        { error: `elevenlabs ${elevenRes.status}: ${errText.slice(0, 200)}` },
+        { status: 502 },
+      );
+    }
 
-    const { audioStream } = tts.toStream(safeText);
-
-    const chunks: Buffer[] = [];
-
-    return await new Promise<Response>((resolve) => {
-      audioStream.on("data", (chunk: Buffer) => chunks.push(chunk));
-      audioStream.on("close", () => {
-        const buffer = Buffer.concat(chunks);
-        if (buffer.length === 0) {
-          resolve(Response.json({ error: "empty audio response" }, { status: 502 }));
-          return;
-        }
-        resolve(
-          new Response(new Uint8Array(buffer), {
-            status: 200,
-            headers: {
-              "Content-Type": "audio/mpeg",
-              "Content-Length": buffer.length.toString(),
-              // Same text → same audio. Cache aggressively to save Microsoft's bandwidth.
-              "Cache-Control": "public, max-age=86400, immutable",
-            },
-          }),
-        );
-      });
-      audioStream.on("error", (err: Error) => {
-        resolve(Response.json({ error: err.message || "tts stream error" }, { status: 502 }));
-      });
+    const audio = await elevenRes.arrayBuffer();
+    return new Response(audio, {
+      status: 200,
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Content-Length": audio.byteLength.toString(),
+        "Cache-Control": "public, max-age=86400, immutable",
+      },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "tts failed";
