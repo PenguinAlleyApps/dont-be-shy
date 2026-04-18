@@ -34,9 +34,10 @@
 
 /*
  * Semantic surface tokens.
- * Components use var(--surface) / var(--surface-ink) / var(--hairline) /
- * var(--muted) — never the raw palette colors. Dark mode flips these four
- * variables; everything else stays put.
+ * The brand is intentionally ALWAYS light. No dark mode. This is a deliberate
+ * brand decision (Anthropic does the same) — the warm bone + serif body is the
+ * whole feeling we're selling. Dark mode would muddle it into "cafe oscuro"
+ * and lose the visual signature.
  */
 :root {
   --surface: #f5f1e8;          /* bone — page background */
@@ -45,17 +46,7 @@
   --surface-ink: #1a1714;      /* primary text */
   --hairline: rgba(26, 23, 20, 0.12);
   --muted: rgba(26, 23, 20, 0.6);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #1a1714;
-    --surface-soft: #221d18;
-    --surface-accent: #2d2722; /* warm dark tint for selected state, bubbles */
-    --surface-ink: #f5f1e8;
-    --hairline: rgba(245, 241, 232, 0.14);
-    --muted: rgba(245, 241, 232, 0.65);
-  }
+  color-scheme: light;
 }
 
 html {
@@ -105,15 +96,11 @@ body {
   animation: calm-pulse 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
-/* Subtle paper grain — disabled in dark mode where it reads as noise. */
+/* Subtle paper grain — adds tactility to bone background. */
 .paper-grain {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   background-repeat: repeat;
   background-size: 160px 160px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .paper-grain { background-image: none; }
 }
 
 /* Selection styling */

@@ -88,7 +88,6 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
           question: questionMeta.question,
           response: text,
           signals: questionMeta.good_answer_signals,
-          apiKey: session.apiKey,
         }),
       });
 
@@ -129,7 +128,6 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
         body: JSON.stringify({
           conversation: updatedConv,
           system: session.system,
-          apiKey: session.apiKey,
         }),
       });
 

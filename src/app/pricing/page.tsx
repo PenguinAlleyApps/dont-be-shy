@@ -246,14 +246,21 @@ function PricingPageInner() {
           </div>
           <div className="md:col-span-8 space-y-4 text-base leading-relaxed" style={{ color: "var(--surface-ink)" }}>
             <p>
-              The source is on GitHub under AGPL-3.0. You can self-host it, with
-              your own Anthropic key, free forever. The only thing the paid tier
-              gets you is convenience — we pay for the AI calls so you don&rsquo;t
-              have to set up an account at Anthropic.
+              The source is on GitHub under AGPL-3.0. The hosted version pays
+              for the AI for you and lives at this URL. The self-hosted version
+              runs on your own machine with your own Anthropic key — same code,
+              same UX, $0/forever, no signup, no trust required.
             </p>
             <p>
-              No subscription. No auto-renew. We charge once, the access expires,
-              you decide if you want to come back.
+              We deliberately don&rsquo;t accept your Anthropic key on this site.
+              Pasting <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.9em" }}>sk-ant-…</code> into
+              a stranger&rsquo;s web app is a bad habit even when the site
+              promises not to log it. If you want unlimited free, clone the
+              repo and run it yourself — it&rsquo;s a five-line setup.
+            </p>
+            <p>
+              No subscription. No auto-renew. We charge once, the access
+              expires, you decide if you want to come back.
             </p>
             <p style={{ color: "var(--muted)" }}>
               For commercial licenses (bootcamps, career platforms wanting to
@@ -275,24 +282,26 @@ function PricingPageInner() {
             className="font-mono text-xs uppercase tracking-[0.22em]"
             style={{ color: "var(--color-deep-green)" }}
           >
-            Or stay free
+            Self-host (free, forever)
           </p>
           <p className="text-2xl leading-snug" style={{
             fontFamily: "var(--font-fraunces)",
             fontWeight: 400,
             color: "var(--surface-ink)",
           }}>
-            Drop your Anthropic key in the setup screen and the demo cap goes away.
-            Costs you whatever Anthropic costs (about 20 cents a session).
+            Clone the repo, drop your Anthropic key in <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.85em" }}>.env.local</code>,
+            run <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.85em" }}>npm run dev</code>.
+            Unlimited everything, costs you only what Anthropic costs you.
           </p>
-          <button
-            type="button"
-            onClick={() => router.push("/setup")}
+          <a
+            href="https://github.com/PenguinAlleyApps/dont-be-shy#quick-start"
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-4 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest underline decoration-1 underline-offset-4 transition-opacity hover:opacity-70"
             style={{ color: "var(--color-oxblood)" }}
           >
-            Use your own key →
-          </button>
+            Read the setup guide →
+          </a>
         </section>
       </main>
 

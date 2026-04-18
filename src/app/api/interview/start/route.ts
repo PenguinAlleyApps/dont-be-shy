@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
       companyName,
       roleType,
       questionCount = 5,
-      apiKey: userKey,
       model,
     } = body as {
       jobTitle: string;
@@ -53,7 +52,6 @@ export async function POST(request: NextRequest) {
       companyName?: string;
       roleType: RoleType;
       questionCount?: number;
-      apiKey?: string;
       model?: string;
     };
 
@@ -61,21 +59,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "jobTitle is required" }, { status: 400 });
     }
 
-    /* ----- Tier resolution -------------------------------------------------- */
+    /* ----- Tier resolution --------------------------------------------------
+     * Hosted version is intentionally NOT BYOK. Pasting your `sk-ant-...` on
+     * a public site is a trust nightmare. Two tiers only:
+     *   - Demo: server-funded, 3 questions, 5/hr/IP, $300/mo cap
+     *   - Pro: signed JWT (Authorization Bearer), unlimited, 30/day cap
+     * Devs who want unlimited free can self-host (it's open source).
+     */
 
     const proToken = extractBearer(request.headers.get("authorization"));
     const proPayload = proToken ? await verifyProToken(proToken) : null;
     const isPro = !!proPayload;
 
-    const apiKey = userKey || ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    if (!ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: "No API key provided. Add your Anthropic API key or use demo mode." },
-        { status: 401 },
+        { error: "Server is missing ANTHROPIC_API_KEY. Self-host with your own key." },
+        { status: 503 },
       );
     }
+    const apiKey = ANTHROPIC_API_KEY;
 
-    const isDemo = !userKey && !isPro;
+    const isDemo = !isPro;
 
     /* ----- Pro rate limit --------------------------------------------------- */
 

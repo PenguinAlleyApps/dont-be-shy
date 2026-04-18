@@ -9,11 +9,10 @@ import { ANTHROPIC_API_KEY, DEFAULT_JUDGE_MODEL } from "@/lib/config";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { question, response: userResponse, signals, apiKey: userKey, model } = body as {
+    const { question, response: userResponse, signals, model } = body as {
       question: string;
       response: string;
       signals?: string[];
-      apiKey?: string;
       model?: string;
     };
 
@@ -24,13 +23,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = userKey || ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "No API key" }, { status: 401 });
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: "Server is missing ANTHROPIC_API_KEY" }, { status: 503 });
     }
 
     const effectiveModel = model || DEFAULT_JUDGE_MODEL;
-    const verdict = await evaluate(question, userResponse, apiKey, effectiveModel, signals);
+    const verdict = await evaluate(question, userResponse, ANTHROPIC_API_KEY, effectiveModel, signals);
 
     return NextResponse.json(verdict);
   } catch (err) {

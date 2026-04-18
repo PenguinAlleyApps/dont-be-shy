@@ -46,14 +46,15 @@ Open <http://localhost:3000>. Enter your [Anthropic API key](https://console.ant
 4. **The judge** (Claude Sonnet 4) scores each answer on the 4-axis rubric and returns JSON with strengths, gaps, and a next step
 5. **Aggregate report** — per-session scores, CEFR mode, filler count, downloadable transcript
 
-## BYOK vs demo mode
+## Three tiers
 
-| Mode | Setup | Limits | Best for |
-|------|-------|--------|----------|
-| **BYOK** | You provide an Anthropic key in the UI | None — pay-as-you-go to Anthropic | Real practice |
-| **Demo** | Server-side key (env var) | 3 questions, 5 sessions/hour | Trying it out |
+| Tier | Where | Cost | Limits | Best for |
+|------|-------|------|--------|----------|
+| **Free demo** | Hosted (dont-be-shy.vercel.app) | $0 | 3 questions, 5/hr/IP | Trying it out |
+| **Hosted Pro** | Hosted (dont-be-shy.vercel.app) | $19 / 7 days · $49 / 30 days · one-time | 30 sessions/day | Real practice without setup |
+| **Self-host** | Your machine | Whatever Anthropic costs you (~$0.20/session) | None | Developers, unlimited free |
 
-Your BYOK key is stored in `localStorage`. It is sent only to Anthropic, never to our backend, never logged.
+The hosted site **does not accept your Anthropic API key**. Pasting `sk-ant-…` into a stranger's web app is a bad habit, even with the best intentions on our side. If you want unlimited free, clone the repo and run it locally — your key never leaves your machine.
 
 ## Tech stack
 

@@ -16,15 +16,19 @@ A **horizontal breathing waveform** stretched across the top of the hero, animat
 
 ## Color Palette
 
+**Brand is intentionally always-light.** No dark mode. Anthropic does the same — the warm bone + serif body is the entire feeling we're selling. Auto-flipping to dark muddles it into "cafe oscuro" and loses the visual signature. CEO decision 2026-04-18 after v0.5 dark mode test failed brand integrity check.
+
 | Hex | Name | Role |
 |---|---|---|
-| `#F5F1E8` | Bone | Base background (light mode). Editorial paper, NOT white. |
-| `#1A1714` | Warm charcoal | Base background (dark mode). NOT pure black. |
+| `#F5F1E8` | Bone | Page background. Editorial paper, NOT white. |
+| `#FAF8F3` | Bone-50 | Subtle elevation (NOT a card outline). |
+| `#ECE5D5` | Bone-200 | Warm tint for selected state, message bubbles. |
+| `#1A1714` | Warm charcoal | Primary text. NOT pure black. |
 | `#6B1F2E` | Oxblood | Primary accent. Waveform, display type emphasis, serious moments. |
-| `#1E3A2F` | Deep green | Grounding secondary. Body text dark variant, subtle UI chrome. |
-| `#FF5E47` | Electric coral | Reserved spark. ONLY on the primary CTA (hover/active) and waveform peak on hover. Scarcity = power. |
+| `#1E3A2F` | Deep green | Grounding secondary. Mono labels, hover states. |
+| `#FF5E47` | Electric coral | Reserved spark. ONLY on the primary CTA. Scarcity = power. |
 
-**Forbidden:** indigo, purple, violet, blue-to-purple gradients, CSS linear-gradients, glassmorphism, gradient text.
+**Forbidden:** indigo, purple, violet, blue-to-purple gradients, CSS linear-gradients, glassmorphism, gradient text, **dark mode auto-switch**.
 
 ## Typography
 

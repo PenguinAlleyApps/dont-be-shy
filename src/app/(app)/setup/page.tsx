@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { RoleTemplates } from "@/components/setup/role-templates";
 import { ModeSelector } from "@/components/setup/mode-selector";
-import { ApiKeyInput } from "@/components/setup/api-key-input";
-import { getApiKey, saveApiKey } from "@/lib/api-key";
 import { authHeader } from "@/lib/pro-client";
 import type { RoleType } from "@/types/interview";
 
@@ -34,7 +32,6 @@ interface StepProps {
 function Step({ number, question, helper, children }: StepProps) {
   return (
     <section className="relative pl-8">
-      {/* Left-margin ornament: thin vertical hairline + serif numeral */}
       <span
         aria-hidden="true"
         className="absolute left-0 top-0 h-full w-px"
@@ -91,7 +88,6 @@ export default function SetupPage() {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [mode, setMode] = useState<"voice" | "text">("voice");
-  const [apiKey, setApiKey] = useState(getApiKey() ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -101,7 +97,6 @@ export default function SetupPage() {
     if (!canStart) return;
     setLoading(true);
     setError("");
-    if (apiKey) saveApiKey(apiKey);
 
     try {
       const res = await fetch("/api/interview/start", {
@@ -112,7 +107,6 @@ export default function SetupPage() {
           jobDescription: jobDescription.trim() || undefined,
           roleType,
           questionCount: 5,
-          apiKey: apiKey || undefined,
         }),
       });
 
@@ -129,7 +123,6 @@ export default function SetupPage() {
           mode,
           jobTitle: jobTitle.trim(),
           roleType,
-          apiKey: apiKey || undefined,
         }),
       );
 
@@ -162,7 +155,7 @@ export default function SetupPage() {
             fontFamily: "var(--font-inter-tight)",
           }}
         >
-          Three questions. Then we talk.
+          Two questions. Then we talk.
         </p>
       </header>
 
@@ -236,16 +229,6 @@ export default function SetupPage() {
         <Step number="02" question="How do you want to respond?">
           <ModeSelector mode={mode} onSelect={setMode} />
         </Step>
-
-        <StepDivider />
-
-        <Step
-          number="03"
-          question="Anthropic key"
-          helper="Optional. Skip for the demo (3 questions). With a key, no caps."
-        >
-          <ApiKeyInput apiKey={apiKey} onChange={setApiKey} />
-        </Step>
       </div>
 
       <div className="mt-20">
@@ -285,6 +268,13 @@ export default function SetupPage() {
             </>
           )}
         </button>
+
+        <p
+          className="mt-6 text-[13px] leading-relaxed"
+          style={{ color: "var(--muted)", fontFamily: "var(--font-inter-tight)" }}
+        >
+          Free demo: 3 questions per session. Want unlimited? <a href="/pricing" style={{ color: "var(--color-oxblood)" }} className="underline decoration-1 underline-offset-4 hover:opacity-70">Pro is $19 for 7 days</a>, no subscription. Or run the open-source version locally with your own Anthropic key — no credit card, no signup, no trust required.
+        </p>
       </div>
     </div>
   );
