@@ -11,16 +11,16 @@ export function NavHeader() {
   return (
     <header
       className="border-b px-6 py-4 sm:px-10"
-      style={{ borderColor: "var(--color-charcoal-soft)", background: "var(--color-bone)" }}
+      style={{ borderColor: "var(--hairline)", background: "var(--surface)" }}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Link
           href="/"
           aria-label="Don&apos;t Be Shy home"
           className="transition-opacity hover:opacity-70"
-          style={{ color: "var(--color-charcoal)" }}
+          style={{ color: "var(--surface-ink)" }}
         >
-          <Lockup size={24} ink="var(--color-charcoal)" spark="var(--color-coral)" />
+          <Lockup size={24} ink="var(--surface-ink)" spark="var(--color-coral)" />
         </Link>
         <nav
           aria-label="Primary"

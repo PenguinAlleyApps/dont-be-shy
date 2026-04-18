@@ -25,8 +25,8 @@ function ScoreSummary({ scores }: { scores: AggregateScores }) {
     <section
       className="rounded-2xl border p-6 sm:p-8"
       style={{
-        borderColor: "var(--color-charcoal-soft)",
-        background: "var(--color-bone-50)",
+        borderColor: "var(--hairline)",
+        background: "var(--surface-soft)",
       }}
     >
       <div className="flex items-center justify-between">
@@ -71,8 +71,8 @@ function ScoreSummary({ scores }: { scores: AggregateScores }) {
       <div
         className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t pt-4 font-mono text-[11px] uppercase tracking-widest"
         style={{
-          borderColor: "var(--color-charcoal-soft)",
-          color: "var(--color-charcoal-soft)",
+          borderColor: "var(--hairline)",
+          color: "var(--muted)",
         }}
       >
         <span>{scores.turns_scored} questions scored</span>
@@ -158,9 +158,9 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
             aria-label="Download transcript as JSON"
             className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 font-mono text-[11px] uppercase tracking-widest transition-opacity hover:opacity-70"
             style={{
-              borderColor: "var(--color-charcoal-soft)",
+              borderColor: "var(--hairline)",
               color: "var(--color-deep-green)",
-              background: "var(--color-bone-50)",
+              background: "var(--surface-soft)",
             }}
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
@@ -204,8 +204,8 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
                 key={i}
                 className="overflow-hidden rounded-2xl border"
                 style={{
-                  borderColor: "var(--color-charcoal-soft)",
-                  background: "var(--color-bone-50)",
+                  borderColor: "var(--hairline)",
+                  background: "var(--surface-soft)",
                 }}
               >
                 <button
@@ -218,7 +218,7 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
                     <span
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-xs font-semibold"
                       style={{
-                        background: "var(--color-bone-200)",
+                        background: "var(--surface-accent)",
                         color: "var(--color-deep-green)",
                       }}
                     >
@@ -226,7 +226,7 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
                     </span>
                     <span
                       className="truncate text-sm leading-snug"
-                      style={{ color: "var(--color-charcoal)" }}
+                      style={{ color: "var(--surface-ink)" }}
                     >
                       {turn.questionMeta.question.slice(0, 80)}
                       {turn.questionMeta.question.length > 80 ? "..." : ""}
@@ -245,7 +245,7 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
                 {isExpanded && (
                   <div
                     className="space-y-4 border-t px-5 py-5"
-                    style={{ borderColor: "var(--color-charcoal-soft)" }}
+                    style={{ borderColor: "var(--hairline)" }}
                   >
                     <div>
                       <p
@@ -256,7 +256,7 @@ export default function ResultsPage({ params }: { params: Promise<{ sessionId: s
                       </p>
                       <p
                         className="mt-2 text-sm leading-relaxed"
-                        style={{ color: "var(--color-charcoal)" }}
+                        style={{ color: "var(--surface-ink)" }}
                       >
                         {turn.userResponse}
                       </p>

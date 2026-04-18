@@ -1,80 +1,99 @@
 "use client";
 
 import { Mic, Keyboard } from "lucide-react";
+import { BreathingWaveform } from "@/components/brand/breathing-waveform";
 
 interface ModeSelectorProps {
   mode: "voice" | "text";
   onSelect: (mode: "voice" | "text") => void;
 }
 
-interface OptionProps {
+interface RowProps {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   title: string;
   caption: string;
-  ariaLabel: string;
+  isVoice?: boolean;
 }
 
-function Option({ active, onClick, icon, title, caption, ariaLabel }: OptionProps) {
+function Row({ active, onClick, icon, title, caption, isVoice }: RowProps) {
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={active}
       onClick={onClick}
-      aria-pressed={active}
-      aria-label={ariaLabel}
-      className="flex flex-col items-start gap-3 rounded-2xl border p-5 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+      className="relative flex h-16 w-full items-center gap-4 px-5 text-left transition-colors"
       style={{
-        borderColor: active ? "var(--color-oxblood)" : "var(--color-charcoal-soft)",
-        background: active ? "var(--color-bone-200)" : "var(--color-bone-50)",
-        borderWidth: active ? "2px" : "1px",
-        padding: active ? "19px" : "20px",
+        borderLeft: active ? "2px solid var(--color-oxblood)" : "2px solid transparent",
+        background: isVoice ? "rgba(255, 94, 71, 0.05)" : "transparent",
       }}
     >
       <span
-        className="flex h-10 w-10 items-center justify-center rounded-lg"
-        style={{
-          background: active ? "var(--color-oxblood)" : "var(--color-bone-200)",
-          color: active ? "var(--color-bone)" : "var(--color-deep-green)",
-        }}
+        aria-hidden="true"
+        className="flex h-5 w-5 shrink-0 items-center justify-center"
+        style={{ color: active ? "var(--color-oxblood)" : "var(--muted)" }}
       >
         {icon}
       </span>
+      <span className="flex flex-1 flex-col">
+        <span
+          className="text-[15px] font-medium"
+          style={{ color: "var(--surface-ink)", fontFamily: "var(--font-inter-tight)" }}
+        >
+          {title}
+        </span>
+        <span
+          className="text-[13px]"
+          style={{ color: "var(--muted)", fontFamily: "var(--font-inter-tight)" }}
+        >
+          {caption}
+        </span>
+      </span>
+
+      {isVoice && (
+        <span aria-hidden="true" className="w-12 shrink-0 opacity-80">
+          <BreathingWaveform color="var(--color-oxblood)" bars={24} />
+        </span>
+      )}
+
       <span
-        className="text-lg"
+        aria-hidden="true"
+        className="ml-2 h-2.5 w-2.5 shrink-0 rounded-full"
         style={{
-          fontFamily: "var(--font-fraunces)",
-          fontWeight: 500,
-          color: "var(--color-charcoal)",
+          background: active ? "var(--color-oxblood)" : "transparent",
+          border: active ? "none" : "1px solid var(--hairline)",
         }}
-      >
-        {title}
-      </span>
-      <span className="text-sm leading-snug" style={{ color: "var(--color-charcoal-soft)" }}>
-        {caption}
-      </span>
+      />
     </button>
   );
 }
 
 export function ModeSelector({ mode, onSelect }: ModeSelectorProps) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      <Option
+    <div
+      role="radiogroup"
+      aria-label="Response mode"
+      style={{
+        border: "1px solid var(--hairline)",
+      }}
+    >
+      <Row
         active={mode === "voice"}
         onClick={() => onSelect("voice")}
         icon={<Mic className="h-5 w-5" aria-hidden="true" />}
         title="Voice"
-        caption="Speak your answers naturally. Requires Chrome or Edge."
-        ariaLabel="Use voice mode"
+        caption="Spoken answers, live transcription. Chrome or Edge."
+        isVoice
       />
-      <Option
+      <div style={{ height: 1, background: "var(--hairline)" }} aria-hidden="true" />
+      <Row
         active={mode === "text"}
         onClick={() => onSelect("text")}
         icon={<Keyboard className="h-5 w-5" aria-hidden="true" />}
         title="Text"
-        caption="Type your responses. Works in any browser."
-        ariaLabel="Use text mode"
+        caption="Type if you'd rather. Works in any browser."
       />
     </div>
   );

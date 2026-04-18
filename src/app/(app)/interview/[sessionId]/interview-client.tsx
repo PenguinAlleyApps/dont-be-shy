@@ -177,20 +177,20 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
       <section
         className="flex flex-1 flex-col overflow-hidden rounded-2xl border"
         style={{
-          borderColor: "var(--color-charcoal-soft)",
-          background: "var(--color-bone-50)",
+          borderColor: "var(--hairline)",
+          background: "var(--surface-soft)",
         }}
         aria-label="Interview conversation"
       >
         {/* Progress header */}
-        <div className="border-b px-5 py-3" style={{ borderColor: "var(--color-charcoal-soft)" }}>
+        <div className="border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
           <div className="flex items-center justify-between">
             <h2
               className="text-sm"
               style={{
                 fontFamily: "var(--font-fraunces)",
                 fontWeight: 500,
-                color: "var(--color-charcoal)",
+                color: "var(--surface-ink)",
               }}
             >
               {session.jobTitle}
@@ -204,7 +204,7 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
           </div>
           <div
             className="mt-2 h-1 overflow-hidden rounded-full"
-            style={{ background: "var(--color-bone-200)" }}
+            style={{ background: "var(--surface-accent)" }}
             role="progressbar"
             aria-valuenow={Math.min(currentQuestion + 1, session.questionCount)}
             aria-valuemin={1}
@@ -257,7 +257,7 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
               className="rounded-2xl border p-5 text-center"
               style={{
                 borderColor: "var(--color-oxblood)",
-                background: "var(--color-bone-200)",
+                background: "var(--surface-accent)",
               }}
               role="status"
             >
@@ -266,7 +266,7 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
                 style={{
                   fontFamily: "var(--font-fraunces)",
                   fontWeight: 500,
-                  color: "var(--color-charcoal)",
+                  color: "var(--surface-ink)",
                 }}
               >
                 That&rsquo;s a wrap.
@@ -290,7 +290,7 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
         </div>
 
         {phase === "user" && (
-          <div className="border-t p-5" style={{ borderColor: "var(--color-charcoal-soft)" }}>
+          <div className="border-t p-5" style={{ borderColor: "var(--hairline)" }}>
             <UserInput mode={session.mode} onSubmit={handleUserSubmit} disabled={phase !== "user"} />
           </div>
         )}
@@ -314,8 +314,8 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
           <div
             className="rounded-2xl border p-4"
             style={{
-              borderColor: "var(--color-charcoal-soft)",
-              background: "var(--color-bone-50)",
+              borderColor: "var(--hairline)",
+              background: "var(--surface-soft)",
             }}
           >
             <p
@@ -346,7 +346,7 @@ export function InterviewClient({ sessionId }: { sessionId: string }) {
                     key={i}
                     className="flex items-baseline justify-between font-mono text-xs"
                   >
-                    <span style={{ color: "var(--color-charcoal-soft)" }}>Q{i + 1}</span>
+                    <span style={{ color: "var(--muted)" }}>Q{i + 1}</span>
                     <span style={{ color, fontWeight: 600 }}>
                       {hasScore ? avg.toFixed(1) : "—"}
                     </span>

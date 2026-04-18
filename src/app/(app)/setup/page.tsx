@@ -24,14 +24,64 @@ const ROLE_TITLES: Partial<Record<RoleType, string>> = {
   leadership: "Engineering Manager / Director",
 };
 
-function StepLabel({ number, children }: { number: string; children: React.ReactNode }) {
+interface StepProps {
+  number: string;
+  question: string;
+  helper?: string;
+  children: React.ReactNode;
+}
+
+function Step({ number, question, helper, children }: StepProps) {
   return (
-    <h2
-      className="font-mono text-xs uppercase tracking-[0.22em]"
-      style={{ color: "var(--color-oxblood)" }}
-    >
-      <span style={{ color: "var(--color-deep-green)" }}>{number}</span> · {children}
-    </h2>
+    <section className="relative pl-8">
+      {/* Left-margin ornament: thin vertical hairline + serif numeral */}
+      <span
+        aria-hidden="true"
+        className="absolute left-0 top-0 h-full w-px"
+        style={{ background: "var(--hairline)" }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute left-0 top-0 -translate-x-[calc(100%+8px)] text-[13px]"
+        style={{
+          color: "var(--muted)",
+          fontFamily: "var(--font-fraunces)",
+        }}
+      >
+        {number}
+      </span>
+
+      <h2
+        className="text-[22px] leading-[1.25]"
+        style={{
+          color: "var(--surface-ink)",
+          fontFamily: "var(--font-fraunces)",
+          fontWeight: 500,
+        }}
+      >
+        {question}
+      </h2>
+      {helper && (
+        <p
+          className="mt-1 text-[14px]"
+          style={{
+            color: "var(--muted)",
+            fontFamily: "var(--font-inter-tight)",
+          }}
+        >
+          {helper}
+        </p>
+      )}
+      <div className="mt-6 space-y-6">{children}</div>
+    </section>
+  );
+}
+
+function StepDivider() {
+  return (
+    <div className="flex justify-center" aria-hidden="true">
+      <span className="block h-px w-12" style={{ background: "var(--hairline)" }} />
+    </div>
   );
 }
 
@@ -40,7 +90,6 @@ export default function SetupPage() {
   const [roleType, setRoleType] = useState<RoleType | null>(null);
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [showJD, setShowJD] = useState(false);
   const [mode, setMode] = useState<"voice" | "text">("voice");
   const [apiKey, setApiKey] = useState(getApiKey() ?? "");
   const [loading, setLoading] = useState(false);
@@ -93,107 +142,120 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-8 sm:py-16">
+    <div className="mx-auto max-w-[640px] px-6 py-24">
       <header>
-        <p
-          className="font-mono text-xs uppercase tracking-[0.22em]"
-          style={{ color: "var(--color-deep-green)" }}
-        >
-          Setup
-        </p>
         <h1
-          className="mt-3 text-4xl tracking-tight sm:text-5xl"
+          className="text-[32px] leading-[1.15]"
           style={{
+            color: "var(--surface-ink)",
             fontFamily: "var(--font-fraunces)",
-            fontWeight: 500,
-            color: "var(--color-charcoal)",
+            fontStyle: "italic",
+            fontWeight: 400,
           }}
         >
-          Tell me what you&rsquo;re walking into.
+          Let&rsquo;s calibrate.
         </h1>
-        <p className="mt-3 text-base" style={{ color: "var(--color-charcoal-soft)" }}>
-          Three steps. The interview adapts to what you say here.
+        <p
+          className="mt-3 text-[15px]"
+          style={{
+            color: "var(--muted)",
+            fontFamily: "var(--font-inter-tight)",
+          }}
+        >
+          Three questions. Then we talk.
         </p>
       </header>
 
-      <section className="mt-12 space-y-4">
-        <StepLabel number="01">What role are you interviewing for?</StepLabel>
-        <RoleTemplates
-          selected={roleType}
-          onSelect={(role) => {
-            setRoleType(role);
-            if (role !== "custom" && ROLE_TITLES[role]) {
-              setJobTitle(ROLE_TITLES[role]!);
-            }
-          }}
-        />
-
-        <div className="pt-2">
-          <label htmlFor="job-title" className="sr-only">
-            Job title
-          </label>
-          <input
-            id="job-title"
-            type="text"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            placeholder="Job title (e.g., Senior React Developer at Stripe)"
-            className="w-full rounded-lg border px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: "var(--color-charcoal-soft)",
-              background: "var(--color-bone-50)",
-              color: "var(--color-charcoal)",
-              fontFamily: "var(--font-inter-tight)",
+      <div className="mt-20 space-y-24">
+        <Step
+          number="01"
+          question="What role are you interviewing for?"
+          helper="Pick the closest. Then add the actual job title."
+        >
+          <RoleTemplates
+            selected={roleType}
+            onSelect={(role) => {
+              setRoleType(role);
+              if (role !== "custom" && ROLE_TITLES[role]) {
+                setJobTitle(ROLE_TITLES[role]!);
+              }
             }}
           />
-        </div>
 
-        {!showJD ? (
-          <button
-            type="button"
-            onClick={() => setShowJD(true)}
-            className="font-mono text-xs uppercase tracking-widest underline decoration-1 underline-offset-4 transition-opacity hover:opacity-70"
-            style={{ color: "var(--color-oxblood)" }}
-          >
-            + Paste a full job description for personalized questions
-          </button>
-        ) : (
-          <textarea
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Paste the full job description here (optional but recommended)..."
-            rows={6}
-            className="w-full rounded-lg border px-4 py-3 text-sm transition-colors focus:outline-none focus:ring-2"
-            style={{
-              borderColor: "var(--color-charcoal-soft)",
-              background: "var(--color-bone-50)",
-              color: "var(--color-charcoal)",
-              fontFamily: "var(--font-inter-tight)",
-            }}
-          />
-        )}
-      </section>
+          <div>
+            <label htmlFor="job-title" className="sr-only">
+              Job title
+            </label>
+            <input
+              id="job-title"
+              type="text"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="Job title (e.g., Senior React Developer at Stripe)"
+              className="h-11 w-full bg-transparent text-[15px] focus:outline-none"
+              style={{
+                borderTop: "none",
+                borderLeft: "none",
+                borderRight: "none",
+                borderBottom: "1px solid var(--hairline)",
+                color: "var(--surface-ink)",
+                fontFamily: "var(--font-inter-tight)",
+                paddingLeft: 0,
+              }}
+            />
+          </div>
 
-      <section className="mt-12 space-y-4">
-        <StepLabel number="02">How do you want to respond?</StepLabel>
-        <ModeSelector mode={mode} onSelect={setMode} />
-      </section>
+          <details className="group">
+            <summary
+              className="cursor-pointer list-none text-[14px] transition-colors hover:opacity-70"
+              style={{ color: "var(--muted)", fontFamily: "var(--font-inter-tight)" }}
+            >
+              + Paste the full job description
+            </summary>
+            <textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste the full JD here (optional)..."
+              rows={6}
+              className="mt-3 w-full resize-none bg-transparent py-2 text-[15px] focus:outline-none"
+              style={{
+                borderTop: "none",
+                borderLeft: "none",
+                borderRight: "none",
+                borderBottom: "1px solid var(--hairline)",
+                color: "var(--surface-ink)",
+                fontFamily: "var(--font-inter-tight)",
+                paddingLeft: 0,
+              }}
+            />
+          </details>
+        </Step>
 
-      <section className="mt-12">
-        <StepLabel number="03">Anthropic key</StepLabel>
-        <div className="mt-4">
+        <StepDivider />
+
+        <Step number="02" question="How do you want to respond?">
+          <ModeSelector mode={mode} onSelect={setMode} />
+        </Step>
+
+        <StepDivider />
+
+        <Step
+          number="03"
+          question="Anthropic key"
+          helper="Optional. Skip for the demo (3 questions). With a key, no caps."
+        >
           <ApiKeyInput apiKey={apiKey} onChange={setApiKey} />
-        </div>
-      </section>
+        </Step>
+      </div>
 
-      <div className="mt-14">
+      <div className="mt-20">
         {error && (
           <p
-            className="mb-4 rounded-lg px-4 py-3 text-sm"
+            className="mb-6 px-4 py-3 text-[14px]"
             style={{
-              background: "var(--color-bone-200)",
+              borderLeft: "2px solid var(--color-oxblood)",
               color: "var(--color-oxblood)",
-              borderLeft: "3px solid var(--color-oxblood)",
+              fontFamily: "var(--font-inter-tight)",
             }}
           >
             {error}
@@ -203,21 +265,23 @@ export default function SetupPage() {
           type="button"
           onClick={handleStart}
           disabled={!canStart || loading}
-          className="group inline-flex items-center gap-3 rounded-full px-7 py-4 text-base font-medium transition-transform duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:scale-100"
+          className="flex h-12 w-full items-center justify-center gap-3 text-[15px] font-medium tracking-tight transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
           style={{
-            background: "var(--color-coral)",
-            color: "var(--color-bone)",
+            background: "var(--surface-ink)",
+            color: "var(--surface)",
+            borderRadius: 0,
+            fontFamily: "var(--font-inter-tight)",
           }}
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               Generating your interview...
             </>
           ) : (
             <>
-              Take the seat.
-              <span aria-hidden="true" className="inline-block transition-transform duration-300 group-hover:translate-x-0.5">→</span>
+              Start the interview
+              <span aria-hidden="true">→</span>
             </>
           )}
         </button>

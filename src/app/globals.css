@@ -2,8 +2,12 @@
 
 /*
  * DON'T BE SHY — visual signature
- * EO-016 compliant. No indigo. No purple. No CSS gradients.
- * Source of truth: CLAUDE.md
+ * EO-016 compliant. No indigo. No CSS gradients.
+ *
+ * v0.5: introduces semantic tokens (--surface, --surface-ink, --hairline,
+ * --muted) so dark-mode flips cleanly. Components reference these, never the
+ * raw bone/charcoal directly. Accents (oxblood, deep-green, coral) do NOT
+ * invert — they stay warm in both modes.
  */
 
 @theme {
@@ -21,13 +25,6 @@
   --color-coral: #ff5e47;
   --color-coral-soft: #ff7d6a;
 
-  /* Semantic aliases */
-  --color-bg: var(--color-bone);
-  --color-fg: var(--color-charcoal);
-  --color-muted: var(--color-deep-green-soft);
-  --color-accent: var(--color-oxblood);
-  --color-spark: var(--color-coral);
-
   /* Typography */
   --font-display: var(--font-fraunces), "Fraunces", Georgia, "Times New Roman", serif;
   --font-body: var(--font-inter-tight), "Inter Tight", ui-sans-serif, system-ui, sans-serif;
@@ -35,31 +32,49 @@
   --font-hand: var(--font-caveat), "Caveat", cursive;
 }
 
+/*
+ * Semantic surface tokens.
+ * Components use var(--surface) / var(--surface-ink) / var(--hairline) /
+ * var(--muted) — never the raw palette colors. Dark mode flips these four
+ * variables; everything else stays put.
+ */
+:root {
+  --surface: #f5f1e8;          /* bone — page background */
+  --surface-soft: #faf8f3;     /* slightly lighter elevation, NOT a card */
+  --surface-accent: #ece5d5;   /* warm tint for selected state, bubbles */
+  --surface-ink: #1a1714;      /* primary text */
+  --hairline: rgba(26, 23, 20, 0.12);
+  --muted: rgba(26, 23, 20, 0.6);
+}
+
 @media (prefers-color-scheme: dark) {
-  @theme {
-    --color-bg: var(--color-charcoal);
-    --color-fg: var(--color-bone);
-    --color-muted: #b8a99a;
+  :root {
+    --surface: #1a1714;
+    --surface-soft: #221d18;
+    --surface-accent: #2d2722; /* warm dark tint for selected state, bubbles */
+    --surface-ink: #f5f1e8;
+    --hairline: rgba(245, 241, 232, 0.14);
+    --muted: rgba(245, 241, 232, 0.65);
   }
 }
 
 html {
   font-family: var(--font-body);
-  background: var(--color-bg);
-  color: var(--color-fg);
+  background: var(--surface);
+  color: var(--surface-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-fg);
+  background: var(--surface);
+  color: var(--surface-ink);
 }
 
 /*
  * Breathing waveform — box-breathing cadence (4s in / 6s out)
- * Pure CSS transform, GPU-composited, free.
+ * Pure CSS transform, GPU-composited.
  */
 @keyframes breathe {
   0%   { transform: scaleY(0.55); opacity: 0.85; }
@@ -79,7 +94,6 @@ body {
 
 /*
  * Recording pulse — used inside the interview UI mic button.
- * Calmer than the default — slower, less aggressive.
  */
 @keyframes calm-pulse {
   0%   { transform: scale(0.96); opacity: 0.7; }
@@ -91,24 +105,29 @@ body {
   animation: calm-pulse 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
-/*
- * Subtle paper grain — adds tactility to the bone background.
- * 1.5% opacity SVG noise. Pure decoration; doesn't interfere with text.
- */
+/* Subtle paper grain — disabled in dark mode where it reads as noise. */
 .paper-grain {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   background-repeat: repeat;
   background-size: 160px 160px;
 }
 
-/* Selection styling — coral on bone, no indigo */
-::selection { background: var(--color-coral); color: var(--color-bone); }
+@media (prefers-color-scheme: dark) {
+  .paper-grain { background-image: none; }
+}
 
-/* Scrollbar hint of brand on Chromium */
+/* Selection styling */
+::selection { background: var(--color-coral); color: #fff; }
+
+/* Scrollbar */
 *::-webkit-scrollbar-thumb {
-  background: var(--color-deep-green);
+  background: var(--hairline);
   border-radius: 8px;
 }
-*::-webkit-scrollbar-track {
-  background: transparent;
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Focus ring used across interactive surfaces */
+.focus-ring {
+  outline: 2px solid var(--color-oxblood);
+  outline-offset: 2px;
 }

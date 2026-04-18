@@ -67,16 +67,16 @@ function PricingPageInner() {
   }
 
   return (
-    <div className="min-h-screen paper-grain" style={{ background: "var(--color-bone)" }}>
+    <div className="min-h-screen paper-grain" style={{ background: "var(--surface)" }}>
       <header className="px-6 pt-6 sm:px-10">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link
             href="/"
             aria-label="Don&apos;t Be Shy home"
             className="transition-opacity hover:opacity-70"
-            style={{ color: "var(--color-charcoal)" }}
+            style={{ color: "var(--surface-ink)" }}
           >
-            <Lockup size={26} ink="var(--color-charcoal)" spark="var(--color-coral)" />
+            <Lockup size={26} ink="var(--surface-ink)" spark="var(--color-coral)" />
           </Link>
           <nav
             aria-label="Primary"
@@ -116,7 +116,7 @@ function PricingPageInner() {
           >
             Pay if it helps. Don&rsquo;t if it doesn&rsquo;t.
           </h1>
-          <p className="mt-6 text-lg leading-relaxed" style={{ color: "var(--color-charcoal)" }}>
+          <p className="mt-6 text-lg leading-relaxed" style={{ color: "var(--surface-ink)" }}>
             Don&rsquo;t Be Shy is free with your own Anthropic key. Pro is for when
             you&rsquo;d rather not deal with that — we run the keys, you just practice.
           </p>
@@ -126,7 +126,7 @@ function PricingPageInner() {
           <p
             className="mt-8 max-w-xl rounded-lg px-4 py-3 text-sm"
             style={{
-              background: "var(--color-bone-200)",
+              background: "var(--surface-accent)",
               color: "var(--color-deep-green)",
               borderLeft: "3px solid var(--color-deep-green)",
             }}
@@ -139,7 +139,7 @@ function PricingPageInner() {
           <p
             className="mt-8 max-w-xl rounded-lg px-4 py-3 text-sm"
             style={{
-              background: "var(--color-bone-200)",
+              background: "var(--surface-accent)",
               color: "var(--color-oxblood)",
               borderLeft: "3px solid var(--color-oxblood)",
             }}
@@ -154,9 +154,9 @@ function PricingPageInner() {
               key={tier.sku}
               className="flex flex-col rounded-2xl border p-8"
               style={{
-                borderColor: tier.highlight ? "var(--color-oxblood)" : "var(--color-charcoal-soft)",
+                borderColor: tier.highlight ? "var(--color-oxblood)" : "var(--hairline)",
                 borderWidth: tier.highlight ? "2px" : "1px",
-                background: "var(--color-bone-50)",
+                background: "var(--surface-soft)",
                 padding: tier.highlight ? "31px" : "32px",
               }}
             >
@@ -171,7 +171,7 @@ function PricingPageInner() {
                 style={{
                   fontFamily: "var(--font-fraunces)",
                   fontWeight: 500,
-                  color: "var(--color-charcoal)",
+                  color: "var(--surface-ink)",
                 }}
               >
                 {tier.name}
@@ -188,7 +188,7 @@ function PricingPageInner() {
               </p>
               <p
                 className="mt-4 text-sm leading-relaxed"
-                style={{ color: "var(--color-charcoal-soft)" }}
+                style={{ color: "var(--muted)" }}
               >
                 {tier.blurb}
               </p>
@@ -197,7 +197,7 @@ function PricingPageInner() {
                   <li
                     key={f}
                     className="flex gap-3 text-sm leading-snug"
-                    style={{ color: "var(--color-charcoal)" }}
+                    style={{ color: "var(--surface-ink)" }}
                   >
                     <span aria-hidden="true" style={{ color: "var(--color-oxblood)" }}>
                       ·
@@ -213,8 +213,8 @@ function PricingPageInner() {
                 disabled={loading !== null}
                 className="group mt-8 inline-flex items-center justify-center gap-3 rounded-full px-6 py-3.5 text-base font-medium transition-transform duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
-                  background: tier.highlight ? "var(--color-coral)" : "var(--color-charcoal)",
-                  color: "var(--color-bone)",
+                  background: tier.highlight ? "var(--color-coral)" : "var(--surface-ink)",
+                  color: tier.highlight ? "var(--color-bone)" : "var(--surface)",
                 }}
               >
                 {loading === tier.sku ? (
@@ -244,7 +244,7 @@ function PricingPageInner() {
               The honest part
             </p>
           </div>
-          <div className="md:col-span-8 space-y-4 text-base leading-relaxed" style={{ color: "var(--color-charcoal)" }}>
+          <div className="md:col-span-8 space-y-4 text-base leading-relaxed" style={{ color: "var(--surface-ink)" }}>
             <p>
               The source is on GitHub under AGPL-3.0. You can self-host it, with
               your own Anthropic key, free forever. The only thing the paid tier
@@ -255,7 +255,7 @@ function PricingPageInner() {
               No subscription. No auto-renew. We charge once, the access expires,
               you decide if you want to come back.
             </p>
-            <p style={{ color: "var(--color-charcoal-soft)" }}>
+            <p style={{ color: "var(--muted)" }}>
               For commercial licenses (bootcamps, career platforms wanting to
               embed or rebrand), email{" "}
               <a
@@ -270,7 +270,7 @@ function PricingPageInner() {
           </div>
         </section>
 
-        <section className="mt-20 flex flex-col items-start gap-4 border-t pt-12" style={{ borderColor: "var(--color-charcoal-soft)" }}>
+        <section className="mt-20 flex flex-col items-start gap-4 border-t pt-12" style={{ borderColor: "var(--hairline)" }}>
           <p
             className="font-mono text-xs uppercase tracking-[0.22em]"
             style={{ color: "var(--color-deep-green)" }}
@@ -280,7 +280,7 @@ function PricingPageInner() {
           <p className="text-2xl leading-snug" style={{
             fontFamily: "var(--font-fraunces)",
             fontWeight: 400,
-            color: "var(--color-charcoal)",
+            color: "var(--surface-ink)",
           }}>
             Drop your Anthropic key in the setup screen and the demo cap goes away.
             Costs you whatever Anthropic costs (about 20 cents a session).
@@ -307,7 +307,7 @@ export default function PricingPage() {
       fallback={
         <div
           className="flex min-h-screen items-center justify-center font-mono text-xs uppercase tracking-widest"
-          style={{ background: "var(--color-bone)", color: "var(--color-deep-green)" }}
+          style={{ background: "var(--surface)", color: "var(--color-deep-green)" }}
         >
           Loading…
         </div>

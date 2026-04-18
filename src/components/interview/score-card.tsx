@@ -23,14 +23,14 @@ function ScoreBar({ label, score, max = 5 }: { label: string; score: number; max
         </span>
         <span
           className="font-mono text-sm font-semibold"
-          style={{ color: "var(--color-charcoal)" }}
+          style={{ color: "var(--surface-ink)" }}
         >
           {score}/{max}
         </span>
       </div>
       <div
         className="h-1.5 overflow-hidden rounded-full"
-        style={{ background: "var(--color-bone-200)" }}
+        style={{ background: "var(--surface-accent)" }}
       >
         <div
           className="h-full rounded-full transition-all duration-500"
@@ -50,8 +50,8 @@ export function ScoreCard({ verdict }: ScoreCardProps) {
     <div
       className="rounded-2xl border p-5"
       style={{
-        borderColor: "var(--color-charcoal-soft)",
-        background: "var(--color-bone-50)",
+        borderColor: "var(--hairline)",
+        background: "var(--surface-soft)",
       }}
     >
       <div className="mb-4 flex items-center justify-between">
@@ -84,7 +84,7 @@ export function ScoreCard({ verdict }: ScoreCardProps) {
       {verdict.filler_count > 0 && (
         <p
           className="mt-4 font-mono text-[11px]"
-          style={{ color: "var(--color-charcoal-soft)" }}
+          style={{ color: "var(--muted)" }}
         >
           {verdict.filler_count} fillers in {verdict.word_count} words ({verdict.fillers_per_100_words}/100w)
         </p>
@@ -103,7 +103,7 @@ export function ScoreCard({ verdict }: ScoreCardProps) {
               <li
                 key={i}
                 className="text-sm leading-snug"
-                style={{ color: "var(--color-charcoal)" }}
+                style={{ color: "var(--surface-ink)" }}
               >
                 · {s}
               </li>
@@ -125,7 +125,7 @@ export function ScoreCard({ verdict }: ScoreCardProps) {
               <li
                 key={i}
                 className="text-sm leading-snug"
-                style={{ color: "var(--color-charcoal)" }}
+                style={{ color: "var(--surface-ink)" }}
               >
                 · {g}
               </li>
@@ -138,7 +138,7 @@ export function ScoreCard({ verdict }: ScoreCardProps) {
         <p
           className="mt-4 border-t pt-3 text-sm leading-snug"
           style={{
-            borderColor: "var(--color-charcoal-soft)",
+            borderColor: "var(--hairline)",
             color: "var(--color-oxblood)",
             fontFamily: "var(--font-fraunces)",
             fontStyle: "italic",

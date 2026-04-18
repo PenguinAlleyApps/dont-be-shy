@@ -5,16 +5,16 @@ import { AttributionFooter } from "@/components/layout/attribution-footer";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-bone text-charcoal paper-grain">
+    <div className="min-h-screen paper-grain" style={{ background: "var(--surface)", color: "var(--surface-ink)" }}>
       {/* Top chrome — minimal nav, lockup left, github + try links right */}
       <header className="px-6 pt-6 sm:px-10">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <Link
             href="/"
             aria-label="Don&apos;t Be Shy home"
-            className="text-charcoal transition-opacity hover:opacity-70"
+            className="transition-opacity hover:opacity-70" style={{ color: "var(--surface-ink)" }}
           >
-            <Lockup size={26} ink="var(--color-charcoal)" spark="var(--color-coral)" />
+            <Lockup size={26} ink="var(--surface-ink)" spark="var(--color-coral)" />
           </Link>
           <nav aria-label="Primary" className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-deep-green">
             <Link href="/pricing" className="transition-opacity hover:opacity-70">
@@ -106,7 +106,7 @@ export default function LandingPage() {
                   className="text-2xl leading-snug"
                   style={{
                     fontFamily: "var(--font-caveat)",
-                    color: "var(--color-charcoal)",
+                    color: "var(--surface-ink)",
                   }}
                 >
                   &ldquo;I passed. Thank you.&rdquo;
@@ -128,7 +128,7 @@ export default function LandingPage() {
             className="font-display text-3xl tracking-tight sm:text-4xl"
             style={{
               fontFamily: "var(--font-fraunces)",
-              color: "var(--color-charcoal)",
+              color: "var(--surface-ink)",
               fontWeight: 500,
             }}
           >
@@ -147,14 +147,14 @@ export default function LandingPage() {
                 style={{
                   fontFamily: "var(--font-fraunces)",
                   fontWeight: 500,
-                  color: "var(--color-charcoal)",
+                  color: "var(--surface-ink)",
                 }}
               >
                 Pick the role you&rsquo;re actually applying for.
               </h3>
               <p
                 className="mt-3 leading-relaxed"
-                style={{ color: "var(--color-charcoal-soft)" }}
+                style={{ color: "var(--muted)" }}
               >
                 Engineer, PM, designer, leadership — or paste the
                 full job description. The interviewer adapts to it,
@@ -173,14 +173,14 @@ export default function LandingPage() {
                 style={{
                   fontFamily: "var(--font-fraunces)",
                   fontWeight: 500,
-                  color: "var(--color-charcoal)",
+                  color: "var(--surface-ink)",
                 }}
               >
                 Speak. Or type. Whichever is less scary today.
               </h3>
               <p
                 className="mt-3 leading-relaxed"
-                style={{ color: "var(--color-charcoal-soft)" }}
+                style={{ color: "var(--muted)" }}
               >
                 Browser-native voice — no signup, no upload, no
                 third-party transcription service. The conversation
@@ -199,14 +199,14 @@ export default function LandingPage() {
                 style={{
                   fontFamily: "var(--font-fraunces)",
                   fontWeight: 500,
-                  color: "var(--color-charcoal)",
+                  color: "var(--surface-ink)",
                 }}
               >
                 See exactly what to fix.
               </h3>
               <p
                 className="mt-3 leading-relaxed"
-                style={{ color: "var(--color-charcoal-soft)" }}
+                style={{ color: "var(--muted)" }}
               >
                 Domain expertise, English fluency with CEFR level,
                 structure, confidence. Filler-word count. One
@@ -232,7 +232,7 @@ export default function LandingPage() {
               style={{
                 fontFamily: "var(--font-fraunces)",
                 fontWeight: 400,
-                color: "var(--color-charcoal)",
+                color: "var(--surface-ink)",
               }}
             >
               Don&rsquo;t Be Shy is free. The source is on GitHub. You bring
@@ -241,7 +241,7 @@ export default function LandingPage() {
             </p>
             <p
               className="mt-6 max-w-2xl leading-relaxed"
-              style={{ color: "var(--color-charcoal-soft)" }}
+              style={{ color: "var(--muted)" }}
             >
               We don&rsquo;t store your transcripts. We don&rsquo;t sell to recruiters.
               We don&rsquo;t add &ldquo;intelligent rewrites of your answers&rdquo;
@@ -279,7 +279,7 @@ export default function LandingPage() {
         </section>
 
         {/* Final CTA — the dare, restated, smaller */}
-        <section className="mt-32 flex flex-col items-start gap-8 border-t pt-16 sm:mt-40" style={{ borderColor: "var(--color-charcoal-soft)" }}>
+        <section className="mt-32 flex flex-col items-start gap-8 border-t pt-16 sm:mt-40" style={{ borderColor: "var(--hairline)" }}>
           <h2
             className="text-4xl tracking-tight sm:text-5xl"
             style={{

@@ -84,7 +84,7 @@ function Welcome() {
       </h1>
       <p
         className="mt-6 max-w-xl text-base leading-relaxed"
-        style={{ color: "var(--color-charcoal)" }}
+        style={{ color: "var(--surface-ink)" }}
       >
         {message}
       </p>

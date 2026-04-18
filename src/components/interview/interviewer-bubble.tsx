@@ -26,8 +26,8 @@ export function InterviewerBubble({ text, isStreaming, ttsEnabled }: Interviewer
         <div
           className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed"
           style={{
-            background: "var(--color-bone-200)",
-            color: "var(--color-charcoal)",
+            background: "var(--surface-accent)",
+            color: "var(--surface-ink)",
             fontFamily: "var(--font-inter-tight)",
           }}
         >
